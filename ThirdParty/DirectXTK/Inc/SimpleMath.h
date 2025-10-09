@@ -573,7 +573,7 @@ namespace DirectX
             void Translation(const Vector3& v) noexcept { _41 = v.x; _42 = v.y; _43 = v.z; }
 
             // Matrix operations
-            bool Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) noexcept;
+            bool Decompose(Vector3& scale, Quaternion& rotationAxis, Vector3& translation) noexcept;
 
             Matrix Transpose() const noexcept;
             void Transpose(Matrix& result) const noexcept;
@@ -631,8 +631,8 @@ namespace DirectX
             static void Lerp(const Matrix& M1, const Matrix& M2, float t, Matrix& result) noexcept;
             static Matrix Lerp(const Matrix& M1, const Matrix& M2, float t) noexcept;
 
-            static void Transform(const Matrix& M, const Quaternion& rotation, Matrix& result) noexcept;
-            static Matrix Transform(const Matrix& M, const Quaternion& rotation) noexcept;
+            static void Transform(const Matrix& M, const Quaternion& rotationAxis, Matrix& result) noexcept;
+            static Matrix Transform(const Matrix& M, const Quaternion& rotationAxis) noexcept;
 
             // Constants
             static const Matrix Identity;
@@ -698,8 +698,8 @@ namespace DirectX
             static void Transform(const Plane& plane, const Matrix& M, Plane& result) noexcept;
             static Plane Transform(const Plane& plane, const Matrix& M) noexcept;
 
-            static void Transform(const Plane& plane, const Quaternion& rotation, Plane& result) noexcept;
-            static Plane Transform(const Plane& plane, const Quaternion& rotation) noexcept;
+            static void Transform(const Plane& plane, const Quaternion& rotationAxis, Plane& result) noexcept;
+            static Plane Transform(const Plane& plane, const Quaternion& rotationAxis) noexcept;
                 // Input quaternion must be the inverse transpose of the transformation
         };
 

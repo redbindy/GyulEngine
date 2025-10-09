@@ -74,6 +74,12 @@
     <IncludePath>$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
+    <VcpkgManifestInstall>false</VcpkgManifestInstall>
+    <VcpkgAutoLink>false</VcpkgAutoLink>
+    <VcpkgApplocalDeps>false</VcpkgApplocalDeps>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -106,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/ThirdParty/DirectXTK/Inc;$(SolutionDir)/ThirdParty/DirectXTK/Src;$(SolutionDir)/ThirdParty/ImGui/Inc;$(SolutionDir)/ThirdParty/ImGui/Src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\DirectXTK\Inc;$(ProjectDir)ThirdParty\ImGui\Inc;$(ProjectDir)ThirdParty\ImGui\Inc\Backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -114,7 +120,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;$(SolutionDir)/ThirdParty/DirectXTK/Bin/Debug/DirectXTK.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -135,26 +141,54 @@
   <ItemGroup>
     <ClInclude Include="ComHelper.h" />
     <ClInclude Include="DebugHelper.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\DDSTextureLoader.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\DirectXHelpers.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\LoaderHelpers.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\pch.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\PlatformHelpers.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\SimpleMath.h" />
+    <ClInclude Include="ThirdParty\DirectXTK\Inc\WICTextureLoader.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_dx11.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_win32.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\imconfig.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\imgui.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\imgui_internal.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_rectpack.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_textedit.h" />
+    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DebugHelper.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp" />
+    <ClCompile Include="ThirdParty\DirectXTK\Src\SimpleMath.cpp" />
+    <ClCompile Include="ThirdParty\DirectXTK\Src\WICTextureLoader.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\imgui.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\imgui_demo.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\imgui_draw.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\imgui_tables.cpp" />
+    <ClCompile Include="ThirdParty\ImGui\Src\imgui_widgets.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Basic.hlsli" />
+    <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl" />
+    <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="ThirdParty\ImGui\Inc\imgui.natvis" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PSBasic.hlsl">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="VSBasic.hlsl">
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Common.hlsli" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

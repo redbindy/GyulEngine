@@ -1917,7 +1917,7 @@ inline Matrix operator/ (float S, const Matrix& M) noexcept
 // Matrix operations
 //------------------------------------------------------------------------------
 
-inline bool Matrix::Decompose(Vector3& scale, Quaternion& rotation, Vector3& translation) noexcept
+inline bool Matrix::Decompose(Vector3& scale, Quaternion& rotationAxis, Vector3& translation) noexcept
 {
     using namespace DirectX;
 
@@ -1927,7 +1927,7 @@ inline bool Matrix::Decompose(Vector3& scale, Quaternion& rotation, Vector3& tra
         return false;
 
     XMStoreFloat3(&scale, s);
-    XMStoreFloat4(&rotation, r);
+    XMStoreFloat4(&rotationAxis, r);
     XMStoreFloat3(&translation, t);
 
     return true;
@@ -2259,10 +2259,10 @@ inline Matrix Matrix::CreateWorld(const Vector3& position, const Vector3& forwar
     return R;
 }
 
-inline Matrix Matrix::CreateFromQuaternion(const Quaternion& rotation) noexcept
+inline Matrix Matrix::CreateFromQuaternion(const Quaternion& rotationAxis) noexcept
 {
     using namespace DirectX;
-    const XMVECTOR quatv = XMLoadFloat4(&rotation);
+    const XMVECTOR quatv = XMLoadFloat4(&rotationAxis);
     Matrix R;
     XMStoreFloat4x4(&R, XMMatrixRotationQuaternion(quatv));
     return R;
@@ -2353,10 +2353,10 @@ inline Matrix Matrix::Lerp(const Matrix& M1, const Matrix& M2, float t) noexcept
     return result;
 }
 
-inline void Matrix::Transform(const Matrix& M, const Quaternion& rotation, Matrix& result) noexcept
+inline void Matrix::Transform(const Matrix& M, const Quaternion& rotationAxis, Matrix& result) noexcept
 {
     using namespace DirectX;
-    const XMVECTOR quatv = XMLoadFloat4(&rotation);
+    const XMVECTOR quatv = XMLoadFloat4(&rotationAxis);
 
     const XMMATRIX M0 = XMLoadFloat4x4(&M);
     const XMMATRIX M1 = XMMatrixRotationQuaternion(quatv);
@@ -2364,10 +2364,10 @@ inline void Matrix::Transform(const Matrix& M, const Quaternion& rotation, Matri
     XMStoreFloat4x4(&result, XMMatrixMultiply(M0, M1));
 }
 
-inline Matrix Matrix::Transform(const Matrix& M, const Quaternion& rotation) noexcept
+inline Matrix Matrix::Transform(const Matrix& M, const Quaternion& rotationAxis) noexcept
 {
     using namespace DirectX;
-    const XMVECTOR quatv = XMLoadFloat4(&rotation);
+    const XMVECTOR quatv = XMLoadFloat4(&rotationAxis);
 
     const XMMATRIX M0 = XMLoadFloat4x4(&M);
     const XMMATRIX M1 = XMMatrixRotationQuaternion(quatv);
@@ -2486,21 +2486,21 @@ inline Plane Plane::Transform(const Plane& plane, const Matrix& M) noexcept
     return result;
 }
 
-inline void Plane::Transform(const Plane& plane, const Quaternion& rotation, Plane& result) noexcept
+inline void Plane::Transform(const Plane& plane, const Quaternion& rotationAxis, Plane& result) noexcept
 {
     using namespace DirectX;
     const XMVECTOR p = XMLoadFloat4(&plane);
-    const XMVECTOR q = XMLoadFloat4(&rotation);
+    const XMVECTOR q = XMLoadFloat4(&rotationAxis);
     XMVECTOR X = XMVector3Rotate(p, q);
     X = XMVectorSelect(p, X, g_XMSelect1110); // result.d = plane.d
     XMStoreFloat4(&result, X);
 }
 
-inline Plane Plane::Transform(const Plane& plane, const Quaternion& rotation) noexcept
+inline Plane Plane::Transform(const Plane& plane, const Quaternion& rotationAxis) noexcept
 {
     using namespace DirectX;
     const XMVECTOR p = XMLoadFloat4(&plane);
-    const XMVECTOR q = XMLoadFloat4(&rotation);
+    const XMVECTOR q = XMLoadFloat4(&rotationAxis);
     XMVECTOR X = XMVector3Rotate(p, q);
     X = XMVectorSelect(p, X, g_XMSelect1110); // result.d = plane.d
 
