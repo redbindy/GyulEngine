@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+
 #if defined(_DEBUG) || defined(DEBUG)
 #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
 #endif
@@ -48,6 +50,9 @@ static ID3D11PixelShader* spPixelShader;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+// 구조체에 대해서 초기화 경고 끄기
+#pragma warning(push)
+#pragma warning(disable : 26495)
 struct Vertex
 {
 	Vector3 pos;
@@ -72,6 +77,14 @@ struct CBWorldMatrix
 };
 static_assert(sizeof(CBWorldMatrix) % 4 == 0);
 
+struct Camera
+{
+	Vector3 pos;
+	Vector3 front;
+	Vector3 up;
+	float fov;
+};
+
 struct CBMainCamera
 {
 	Vector3 cameraPos;
@@ -84,11 +97,11 @@ struct Actor
 {
 	Vector3 pos;
 	Vector3 scale;
-	Vector3 rotationAxis;
-	Vector3 frontDir;
+	Vector3 rotation;
 
 	Mesh mesh;
 };
+#pragma warning(pop)
 
 static ID3D11InputLayout* spInputLayout;
 
@@ -101,14 +114,19 @@ static Actor sActor;
 static CBWorldMatrix sCBWorldMatrix;
 static ID3D11Buffer* spCBWorldMatrixGPU;
 
+static Camera sMainCamera;
 static CBMainCamera sCBMainCamera;
 static ID3D11Buffer* spCBMainCameraGPU;
-static float sFOV;
+static bool sbFollowCursor;
+
+static bool sKeyCodes[UINT8_MAX];
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void OnResize(const int width, const int height);
+void DrawAccordionDragVector3(const char* id, float* const pBindingData, const float min, const float max);
+void DrawAccordionDragVector3(const char* id, float* const pBindingData, const float min, const float max, const float speed);
 
 ID3D11Buffer* CreateConstantBufferOrNull(void* pData, const UINT byteSize);
 
@@ -380,7 +398,7 @@ int WINAPI wWinMain(
 
 		sActor.pos = { 0.f, 0.f, 0.f };
 		sActor.scale = { 1.f, 1.f, 1.f };
-		sActor.rotationAxis = { 0.f, 0.f, 0.f };
+		sActor.rotation = { 0.f, 0.f, 0.f };
 
 		sActor.mesh.vertices = {
 			{ { 0.f, 0.5f, 0.f }, {},{} },
@@ -448,8 +466,10 @@ int WINAPI wWinMain(
 		spCBWorldMatrixGPU = CreateConstantBufferOrNull(&sCBWorldMatrix, sizeof(CBWorldMatrix));
 		spCBMainCameraGPU = CreateConstantBufferOrNull(&sCBMainCamera, sizeof(CBMainCamera));
 
-		sCBMainCamera.cameraPos = { 0.f, 0.f, -0.5f };
-		sFOV = DirectX::XMConvertToRadians(105.f);
+		sMainCamera.pos = { 0.f, 0.f, -3.f };
+		sMainCamera.front = { 0.f, 0.f, 1.f };
+		sMainCamera.up = { 0.f, 1.f, 0.f };
+		sMainCamera.fov = 105.f;
 	}
 
 	ShowWindow(shWnd, nShowCmd);
@@ -512,7 +532,7 @@ int WINAPI wWinMain(
 				const Matrix translation = Matrix::CreateTranslation(sActor.pos);
 				const Matrix scale = Matrix::CreateScale(sActor.scale);
 
-				const Vector3 radians = sActor.rotationAxis * (DirectX::XM_PI / 180.f);
+				const Vector3 radians = sActor.rotation * (DirectX::XM_PI / 180.f);
 
 				const Matrix rotationX = Matrix::CreateRotationX(radians.x);
 				const Matrix rotationY = Matrix::CreateRotationY(radians.y);
@@ -524,10 +544,39 @@ int WINAPI wWinMain(
 				spDeviceContext->UpdateSubresource(spCBWorldMatrixGPU, 0, nullptr, &sCBWorldMatrix, 0, 0);
 
 				// camera
-				const Matrix view = XMMatrixLookAtLH(sCBMainCamera.cameraPos, { 0.f, 0.f, 0.f }, { 0.f, 1.f, 0.f });
+				constexpr float SPEED = 5.f;
+
+				Vector3 cameraRight = sMainCamera.front.Cross(sMainCamera.up);
+				cameraRight.Normalize();
+
+				const float deltaDist = SPEED * deltaTime;
+				if (sKeyCodes['A'])
+				{
+					sMainCamera.pos -= cameraRight * deltaDist;
+				}
+
+				if (sKeyCodes['D'])
+				{
+					sMainCamera.pos += cameraRight * deltaDist;
+				}
+
+				if (sKeyCodes['W'])
+				{
+					sMainCamera.pos += sMainCamera.front * deltaDist;
+				}
+
+				if (sKeyCodes['S'])
+				{
+					sMainCamera.pos -= sMainCamera.front * deltaDist;
+				}
+				sCBMainCamera.cameraPos = sMainCamera.pos;
+
+				const Matrix view = XMMatrixLookToLH(sMainCamera.pos, sMainCamera.front, sMainCamera.up);
 
 				const float aspectRatio = sWidth / static_cast<float>(sHeight);
-				const Matrix proj = XMMatrixPerspectiveFovLH(sFOV, aspectRatio, 0.01f, 100.f);
+
+				const float fovRadian = XMConvertToRadians(sMainCamera.fov);
+				const Matrix proj = XMMatrixPerspectiveFovLH(fovRadian, aspectRatio, 0.01f, 100.f);
 
 				sCBMainCamera.viewProj = view * proj;
 				sCBMainCamera.viewProj = sCBMainCamera.viewProj.Transpose();
@@ -587,127 +636,32 @@ int WINAPI wWinMain(
 				ImGuiIO& io = ImGui::GetIO();
 				ImGui::Text("FPS: %d", static_cast<int>(io.Framerate));
 
-				if (ImGui::BeginChild("Actor", { 0, 0 }, true))
+				if (ImGui::BeginChild("World", { 0, 0 }, true))
 				{
+					ImGui::PushID("MainCamera");
+					{
+						ImGui::Text("MainCamera");
+						ImGui::Separator();
+
+						ImGui::Checkbox("FollowCursor(F5)", &sbFollowCursor);
+						DrawAccordionDragVector3("Position", reinterpret_cast<float*>(&sMainCamera.pos), sWidth * -0.5f, sWidth * 0.5f);
+
+						ImGui::Separator();
+					}
+					ImGui::PopID();
+
 					ImGui::Text("Actor");
 					ImGui::Separator();
 
-					if (ImGui::CollapsingHeader("Position", ImGuiTreeNodeFlags_DefaultOpen))
+					ImGui::PushID("Actor");
 					{
-						if (ImGui::BeginTable("XYZ", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
-						{
-							ImGui::TableSetupColumn("X");
-							ImGui::TableSetupColumn("Y");
-							ImGui::TableSetupColumn("Z");
-							ImGui::TableHeadersRow();
+						DrawAccordionDragVector3("Position", reinterpret_cast<float*>(&sActor.pos), sWidth * -0.5f, sWidth * 0.5f);
+						DrawAccordionDragVector3("Scale", reinterpret_cast<float*>(&sActor.scale), 1.f, 100.f);
 
-							ImGui::TableNextRow();
-							constexpr const char* const labels[] = {
-								"##PosX", "##PosY", "##PosZ"
-							};
-
-							float* pBindingData = reinterpret_cast<float*>(&sActor.pos);
-							for (int i = 0; i < 3; ++i)
-							{
-								ImGui::TableSetColumnIndex(i);
-								ImGui::SetNextItemWidth(-FLT_MIN);
-
-								ImGui::DragFloat(labels[i], pBindingData + i, 0.1f, sWidth * -0.5f, sWidth * 0.5f, "%.1f");
-							}
-						}
-						ImGui::EndTable();
+						constexpr float MAX_DEGREE = 360.f;
+						DrawAccordionDragVector3("Rotation", reinterpret_cast<float*>(&sActor.rotation), -MAX_DEGREE, MAX_DEGREE);
 					}
-
-					if (ImGui::CollapsingHeader("Scale", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						if (ImGui::BeginTable("XYZ", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
-						{
-							ImGui::TableSetupColumn("X");
-							ImGui::TableSetupColumn("Y");
-							ImGui::TableSetupColumn("Z");
-							ImGui::TableHeadersRow();
-
-							ImGui::TableNextRow();
-							constexpr const char* const labels[] = {
-								"##ScaleX", "##ScaleY", "##ScaleZ"
-							};
-
-							constexpr float MIN_SCALE = 1.f;
-							constexpr float MAX_SCALE = 100.f;
-
-							float* pBindingData = reinterpret_cast<float*>(&sActor.scale);
-							for (int i = 0; i < 3; ++i)
-							{
-								ImGui::TableSetColumnIndex(i);
-								ImGui::SetNextItemWidth(-FLT_MIN);
-
-								ImGui::InputFloat(labels[i], pBindingData + i, 0.f, 0.f, "%.1f");
-
-								pBindingData[i] = std::clamp(pBindingData[i], MIN_SCALE, MAX_SCALE);
-							}
-
-							ImGui::TableNextRow();
-							constexpr const char* const sliderLabels[] = {
-								"##ScaleXSlider", "##ScaleYSlider", "##ScaleZSlider"
-							};
-
-							for (int i = 0; i < 3; ++i)
-							{
-								ImGui::TableSetColumnIndex(i);
-								ImGui::SetNextItemWidth(-FLT_MIN);
-
-								ImGui::SliderFloat(sliderLabels[i], pBindingData + i, MIN_SCALE, MAX_SCALE, "%.1f");
-							}
-						}
-						ImGui::EndTable();
-					}
-
-					if (ImGui::CollapsingHeader("Rotation", ImGuiTreeNodeFlags_DefaultOpen))
-					{
-						if (ImGui::BeginTable("XYZ", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
-						{
-							ImGui::TableSetupColumn("X");
-							ImGui::TableSetupColumn("Y");
-							ImGui::TableSetupColumn("Z");
-							ImGui::TableHeadersRow();
-
-							ImGui::TableNextRow();
-							constexpr const char* const labels[] = {
-								"##RotationX", "##RotationY", "##RotationZ"
-							};
-
-							constexpr float MAX_DEGREE = 360.f;
-
-							float* pBindingData = reinterpret_cast<float*>(&sActor.rotationAxis);
-							for (int i = 0; i < 3; ++i)
-							{
-								ImGui::TableSetColumnIndex(i);
-								ImGui::SetNextItemWidth(-FLT_MIN);
-
-								ImGui::InputFloat(labels[i], pBindingData + i, 0.f, 0.f, "%.1f");
-
-								// wrapping
-								if (abs(pBindingData[i]) > MAX_DEGREE)
-								{
-									pBindingData[i] -= MAX_DEGREE * static_cast<int>(pBindingData[i] / MAX_DEGREE);
-								}
-							}
-
-							ImGui::TableNextRow();
-							constexpr const char* const sliderLabels[] = {
-								"##RotationXSlider", "##RotationYSlider", "##RotationZSlider"
-							};
-
-							for (int i = 0; i < 3; ++i)
-							{
-								ImGui::TableSetColumnIndex(i);
-								ImGui::SetNextItemWidth(-FLT_MIN);
-
-								ImGui::DragFloat(sliderLabels[i], pBindingData + i, 1.f, -MAX_DEGREE, MAX_DEGREE, "%.1f");
-							}
-						}
-						ImGui::EndTable();
-					}
+					ImGui::PopID();
 				}
 				ImGui::EndChild();
 			}
@@ -772,6 +726,32 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			const int height = HIWORD(lParam);
 
 			OnResize(width, height);
+		}
+		break;
+
+	case WM_KEYDOWN:
+		switch (wParam)
+		{
+		case VK_F5:
+			sbFollowCursor = !sbFollowCursor;
+			break;
+
+		default:
+			sKeyCodes[wParam] = true;
+			break;
+		}
+		break;
+
+	case WM_KEYUP:
+		sKeyCodes[wParam] = false;
+		break;
+
+	case WM_MOUSEMOVE:
+		{
+			const int x = LOWORD(lParam);
+			const int y = HIWORD(lParam);
+
+
 		}
 		break;
 
@@ -881,6 +861,56 @@ void OnResize(const int width, const int height)
 	sViewport.TopLeftY = 0.f;
 	sViewport.Width = static_cast<FLOAT>(width);
 	sViewport.Height = static_cast<FLOAT>(height);
+}
+
+void DrawAccordionDragVector3(const char* id,
+	float* const pBindingData,
+	const float min,
+	const float max)
+{
+	DrawAccordionDragVector3(id, pBindingData, min, max, 0.1f);
+}
+
+void DrawAccordionDragVector3(
+	const char* id,
+	float* const pBindingData,
+	const float min,
+	const float max,
+	const float speed
+)
+{
+	constexpr int DIMENSION = 3;
+
+	if (ImGui::CollapsingHeader(id))
+	{
+		if (ImGui::BeginTable("XYZ", DIMENSION, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
+		{
+			constexpr const char* const XYZ[] = {
+				"X", "Y", "Z"
+			};
+
+			for (const char* const tag : XYZ)
+			{
+				ImGui::TableSetupColumn(tag);
+			}
+			ImGui::TableHeadersRow();
+
+			ImGui::TableNextRow();
+
+			for (int i = 0; i < DIMENSION; ++i)
+			{
+				ImGui::TableSetColumnIndex(i);
+				ImGui::SetNextItemWidth(-FLT_MIN);
+
+				ImGui::PushID(XYZ[i]);
+				ImGui::DragFloat(id, pBindingData + i, speed, min, max, "%.1f");
+				ImGui::PopID();
+
+				pBindingData[i] = std::clamp(pBindingData[i], min, max);
+			}
+		}
+		ImGui::EndTable();
+	}
 }
 
 ID3D11Buffer* CreateConstantBufferOrNull(void* pData, const UINT byteSize)
