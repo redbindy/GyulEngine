@@ -80,8 +80,8 @@ static_assert(sizeof(CBWorldMatrix) % 4 == 0);
 struct Camera
 {
 	Vector3 pos;
-	Vector3 front;
-	Vector3 up;
+	float yaw;
+	float pitch;
 	float fov;
 };
 
@@ -117,9 +117,15 @@ static ID3D11Buffer* spCBWorldMatrixGPU;
 static Camera sMainCamera;
 static CBMainCamera sCBMainCamera;
 static ID3D11Buffer* spCBMainCameraGPU;
+
+static int sPrevX;
+static int sPrevY;
 static bool sbFollowCursor;
 
 static bool sKeyCodes[UINT8_MAX];
+
+// constants
+constexpr float MAX_ANGLE = 360.f;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -467,8 +473,8 @@ int WINAPI wWinMain(
 		spCBMainCameraGPU = CreateConstantBufferOrNull(&sCBMainCamera, sizeof(CBMainCamera));
 
 		sMainCamera.pos = { 0.f, 0.f, -3.f };
-		sMainCamera.front = { 0.f, 0.f, 1.f };
-		sMainCamera.up = { 0.f, 1.f, 0.f };
+		sMainCamera.yaw = 0.f;
+		sMainCamera.pitch = 0.f;
 		sMainCamera.fov = 105.f;
 	}
 
@@ -524,6 +530,8 @@ int WINAPI wWinMain(
 
 						break;
 					}
+
+					Sleep(0);
 				}
 
 				prev = curr;
@@ -546,32 +554,47 @@ int WINAPI wWinMain(
 				// camera
 				constexpr float SPEED = 5.f;
 
-				Vector3 cameraRight = sMainCamera.front.Cross(sMainCamera.up);
-				cameraRight.Normalize();
+				const float radianYaw = XMConvertToRadians(sMainCamera.yaw);
+				const float radianPitch = XMConvertToRadians(sMainCamera.pitch);
+
+				Vector3 front(0.f, 0.f, 1.f);
+				Vector3 up(0.f, 1.f, 0.f);
+
+				const Matrix yaw = Matrix::CreateRotationY(radianYaw);
+				front = Vector3::Transform(front, yaw);
+
+				Vector3 right = front.Cross(up);
+				right.Normalize();
+
+				const Quaternion quatPitch = Quaternion::CreateFromAxisAngle(right, radianPitch);
+				const Matrix pitch = Matrix::CreateFromQuaternion(quatPitch);
+
+				front = Vector3::Transform(front, pitch);
+				up = Vector3::Transform(up, pitch);
 
 				const float deltaDist = SPEED * deltaTime;
 				if (sKeyCodes['A'])
 				{
-					sMainCamera.pos -= cameraRight * deltaDist;
+					sMainCamera.pos -= right * deltaDist;
 				}
 
 				if (sKeyCodes['D'])
 				{
-					sMainCamera.pos += cameraRight * deltaDist;
+					sMainCamera.pos += right * deltaDist;
 				}
 
 				if (sKeyCodes['W'])
 				{
-					sMainCamera.pos += sMainCamera.front * deltaDist;
+					sMainCamera.pos += front * deltaDist;
 				}
 
 				if (sKeyCodes['S'])
 				{
-					sMainCamera.pos -= sMainCamera.front * deltaDist;
+					sMainCamera.pos -= front * deltaDist;
 				}
 				sCBMainCamera.cameraPos = sMainCamera.pos;
 
-				const Matrix view = XMMatrixLookToLH(sMainCamera.pos, sMainCamera.front, sMainCamera.up);
+				const Matrix view = XMMatrixLookToLH(sMainCamera.pos, front, up);
 
 				const float aspectRatio = sWidth / static_cast<float>(sHeight);
 
@@ -643,7 +666,18 @@ int WINAPI wWinMain(
 						ImGui::Text("MainCamera");
 						ImGui::Separator();
 
-						ImGui::Checkbox("FollowCursor(F5)", &sbFollowCursor);
+						constexpr const char* const CURSOR_TEXT = "FollowCursor(Wheel)";
+						if (sbFollowCursor)
+						{
+							ImGui::Text(CURSOR_TEXT);
+						}
+						else
+						{
+							ImGui::TextDisabled(CURSOR_TEXT);
+						}
+						ImGui::SliderFloat("FieldOfView", &sMainCamera.fov, 75.f, 105.f, "%.f");
+						ImGui::DragFloat("Yaw", &sMainCamera.yaw, 1.f, -MAX_ANGLE, MAX_ANGLE, "%.1f", ImGuiSliderFlags_WrapAround);
+						ImGui::DragFloat("Pitch", &sMainCamera.pitch, 1.f, -MAX_ANGLE, MAX_ANGLE, "%.1f", ImGuiSliderFlags_WrapAround);
 						DrawAccordionDragVector3("Position", reinterpret_cast<float*>(&sMainCamera.pos), sWidth * -0.5f, sWidth * 0.5f);
 
 						ImGui::Separator();
@@ -657,9 +691,7 @@ int WINAPI wWinMain(
 					{
 						DrawAccordionDragVector3("Position", reinterpret_cast<float*>(&sActor.pos), sWidth * -0.5f, sWidth * 0.5f);
 						DrawAccordionDragVector3("Scale", reinterpret_cast<float*>(&sActor.scale), 1.f, 100.f);
-
-						constexpr float MAX_DEGREE = 360.f;
-						DrawAccordionDragVector3("Rotation", reinterpret_cast<float*>(&sActor.rotation), -MAX_DEGREE, MAX_DEGREE);
+						DrawAccordionDragVector3("Rotation", reinterpret_cast<float*>(&sActor.rotation), -MAX_ANGLE, MAX_ANGLE, 2.f);
 					}
 					ImGui::PopID();
 				}
@@ -719,6 +751,7 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SIZE:
+		if (wParam != SIZE_MINIMIZED)
 		{
 			ASSERT(spSwapChain != nullptr);
 
@@ -730,20 +763,19 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_KEYDOWN:
-		switch (wParam)
-		{
-		case VK_F5:
-			sbFollowCursor = !sbFollowCursor;
-			break;
-
-		default:
-			sKeyCodes[wParam] = true;
-			break;
-		}
+		sKeyCodes[wParam] = true;
 		break;
 
 	case WM_KEYUP:
 		sKeyCodes[wParam] = false;
+		break;
+
+	case WM_MBUTTONDOWN:
+		sbFollowCursor = true;
+		break;
+
+	case WM_MBUTTONUP:
+		sbFollowCursor = false;
 		break;
 
 	case WM_MOUSEMOVE:
@@ -751,7 +783,23 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			const int x = LOWORD(lParam);
 			const int y = HIWORD(lParam);
 
+			if (sbFollowCursor)
+			{
+				const int deltaX = x - sPrevX;
+				const int deltaY = y - sPrevY;
 
+				const float yawDeltaDegree = (deltaX / static_cast<float>(sWidth)) * MAX_ANGLE;
+				const float pitchDeltaDegree = (-deltaY / static_cast<float>(sHeight)) * MAX_ANGLE;
+
+				sMainCamera.yaw += yawDeltaDegree;
+				sMainCamera.pitch += pitchDeltaDegree;
+
+				sMainCamera.yaw -= static_cast<int>(sMainCamera.yaw / MAX_ANGLE) * MAX_ANGLE;
+				sMainCamera.pitch -= static_cast<int>(sMainCamera.pitch / MAX_ANGLE) * MAX_ANGLE;
+			}
+
+			sPrevX = x;
+			sPrevY = y;
 		}
 		break;
 
