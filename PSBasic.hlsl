@@ -1,8 +1,11 @@
 #include "Basic.hlsli"
 
-float4 main(PSBasicInput input) : SV_Target
+Texture2D sTexture : register(t0);
+SamplerState sSamplerState : register(s0);
+
+float4 main(PSBasicInput input) : SV_TARGET
 {
-    const float4 color = float4(0.f, 0.f, 1.f, 1.f);
-    
+    const float4 color = sTexture.Sample(sSamplerState, input.uv);
+	
     return color;
 }

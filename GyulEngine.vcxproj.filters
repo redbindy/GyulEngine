@@ -13,32 +13,32 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="ImGui">
-      <UniqueIdentifier>{306cae5d-03ae-4a22-bba1-fe22bc455207}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImGui\Inc">
-      <UniqueIdentifier>{184a71f6-9f00-4615-976d-518c1dafedea}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImGui\Src">
-      <UniqueIdentifier>{b1ebfa53-396a-425d-b8ce-ab1a448f595a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImGui\Inc\Backends">
-      <UniqueIdentifier>{1417ebb1-b60f-49c7-b43f-7370ee0bc772}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImGui\Src\Backends">
-      <UniqueIdentifier>{e6badd5e-d428-4220-852a-fbc42c405367}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DirectXTK">
-      <UniqueIdentifier>{7fe7a79d-13a0-471c-a1bd-4c640c8b608c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DirectXTK\Inc">
-      <UniqueIdentifier>{6ce6feeb-6942-4716-b346-43214a5656d3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="DirectXTK\Src">
-      <UniqueIdentifier>{9aaee63b-c382-480e-b4bf-e0ac2f014b6e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shader">
       <UniqueIdentifier>{35e2eb89-6fff-48f1-abdf-50b89e550c4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectXTK">
+      <UniqueIdentifier>{5d0c23d2-0953-4388-bd20-63101e16b08c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectXTK\Inc">
+      <UniqueIdentifier>{f06d9fd3-7787-4b30-a66b-ac73c1ee2c94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DirectXTK\Src">
+      <UniqueIdentifier>{1ca1a8d5-964f-40d4-86e7-1a453106d449}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{62b05657-7727-4e7d-b176-7527715fda90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\Inc">
+      <UniqueIdentifier>{ac5f48a8-7803-4c35-a327-32e79c363c97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\Inc\Backends">
+      <UniqueIdentifier>{23d0282b-ef4d-412b-adc6-cf0ff89b74af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\Src">
+      <UniqueIdentifier>{64247c31-c305-4fe4-a444-29b97289010c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui\Src\Backends">
+      <UniqueIdentifier>{61ed30cd-4367-471d-b157-8ede30ec41b1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -47,30 +47,6 @@
     </ClInclude>
     <ClInclude Include="ComHelper.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_dx11.h">
-      <Filter>ImGui\Inc\Backends</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_win32.h">
-      <Filter>ImGui\Inc\Backends</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\imconfig.h">
-      <Filter>ImGui\Inc</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\imgui.h">
-      <Filter>ImGui\Inc</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\imgui_internal.h">
-      <Filter>ImGui\Inc</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_rectpack.h">
-      <Filter>ImGui\Inc</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_textedit.h">
-      <Filter>ImGui\Inc</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_truetype.h">
-      <Filter>ImGui\Inc</Filter>
     </ClInclude>
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h">
       <Filter>DirectXTK\Inc</Filter>
@@ -96,6 +72,30 @@
     <ClInclude Include="ThirdParty\DirectXTK\Inc\WICTextureLoader.h">
       <Filter>DirectXTK\Inc</Filter>
     </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\imconfig.h">
+      <Filter>ImGui\Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\imgui.h">
+      <Filter>ImGui\Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\imgui_internal.h">
+      <Filter>ImGui\Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_rectpack.h">
+      <Filter>ImGui\Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_textedit.h">
+      <Filter>ImGui\Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\imstb_truetype.h">
+      <Filter>ImGui\Inc</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_dx11.h">
+      <Filter>ImGui\Inc\Backends</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_win32.h">
+      <Filter>ImGui\Inc\Backends</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -104,11 +104,14 @@
     <ClCompile Include="DebugHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_dx11.cpp">
-      <Filter>ImGui\Src\Backends</Filter>
+    <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
+      <Filter>DirectXTK\Src</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_win32.cpp">
-      <Filter>ImGui\Src\Backends</Filter>
+    <ClCompile Include="ThirdParty\DirectXTK\Src\SimpleMath.cpp">
+      <Filter>DirectXTK\Src</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\DirectXTK\Src\WICTextureLoader.cpp">
+      <Filter>DirectXTK\Src</Filter>
     </ClCompile>
     <ClCompile Include="ThirdParty\ImGui\Src\imgui.cpp">
       <Filter>ImGui\Src</Filter>
@@ -125,38 +128,38 @@
     <ClCompile Include="ThirdParty\ImGui\Src\imgui_widgets.cpp">
       <Filter>ImGui\Src</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
-      <Filter>DirectXTK\Src</Filter>
+    <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_dx11.cpp">
+      <Filter>ImGui\Src\Backends</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\DirectXTK\Src\SimpleMath.cpp">
-      <Filter>DirectXTK\Src</Filter>
-    </ClCompile>
-    <ClCompile Include="ThirdParty\DirectXTK\Src\WICTextureLoader.cpp">
-      <Filter>DirectXTK\Src</Filter>
+    <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_win32.cpp">
+      <Filter>ImGui\Src\Backends</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter">
-      <Filter>ImGui\Inc</Filter>
+    <None Include="Basic.hlsli">
+      <Filter>Shader</Filter>
     </None>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
       <Filter>DirectXTK\Inc</Filter>
     </None>
-    <None Include="Basic.hlsli">
-      <Filter>Shader</Filter>
+    <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter">
+      <Filter>ImGui\Inc</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="ThirdParty\ImGui\Inc\imgui.natvis">
-      <Filter>ImGui\Inc</Filter>
-    </Natvis>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="PSBasic.hlsl">
+    <FxCompile Include="PSStub.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="VSBasic.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="PSBasic.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="ThirdParty\ImGui\Inc\imgui.natvis">
+      <Filter>ImGui\Inc</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>

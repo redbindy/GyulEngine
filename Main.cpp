@@ -8,15 +8,14 @@
 #include <cctype>
 #include <algorithm>
 
-// winapi
 #include <Windows.h>
-
-// d3d
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <d3dcompiler.h>
+#include <wrl.h>
 
 #include "SimpleMath.h"
+#include "DDSTextureLoader.h"
 
 #include "DebugHelper.h"
 #include "ComHelper.h"
@@ -24,7 +23,6 @@
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
-#include <wrl.h>
 
 const TCHAR* const CLASS_NAME = TEXT("GyulEngine");
 
@@ -47,6 +45,9 @@ static ID3DBlob* spVertexShaderBlob;
 
 static ID3D11PixelShader* spPixelShader;
 
+static ID3D11RasterizerState* spWireframeState;
+static bool sbWireframe;
+
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
@@ -66,9 +67,19 @@ struct Mesh
 	std::vector<Vertex> vertices;
 	std::vector<int32_t> indices;
 
-	ID3D11Buffer* vertexBufferGPU;
-	ID3D11Buffer* indexBufferGPU;
+	ID3D11Buffer* pVertexBufferGPU;
+	ID3D11Buffer* pIndexBufferGPU;
+
+	ID3D11InputLayout* pInputLayout;
 	D3D11_PRIMITIVE_TOPOLOGY primitiveTopology;
+};
+
+struct Material
+{
+	ID3D11ShaderResourceView* pTextureViewGPU;
+	ID3D11SamplerState* pSamplerState;
+	ID3D11VertexShader* pVertexShader;
+	ID3D11PixelShader* pPixelShader;
 };
 
 struct CBWorldMatrix
@@ -81,6 +92,7 @@ struct Camera
 {
 	Vector3 pos;
 	float yaw;
+
 	float pitch;
 	float fov;
 };
@@ -100,13 +112,17 @@ struct Actor
 	Vector3 rotation;
 
 	Mesh mesh;
+	Material material;
 };
 #pragma warning(pop)
 
 static ID3D11InputLayout* spInputLayout;
 
-ID3D11Buffer* spVertexBufferGPU;
-ID3D11Buffer* spIndexBufferGPU;
+static ID3D11Buffer* spVertexBufferGPU;
+static ID3D11Buffer* spIndexBufferGPU;
+static ID3D11Texture2D* spTextureGPU;
+static ID3D11ShaderResourceView* spTextureViewGPU;
+static ID3D11SamplerState* spSamplerState;
 
 D3D11_VIEWPORT sViewport;
 
@@ -131,10 +147,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void OnResize(const int width, const int height);
-void DrawAccordionDragVector3(const char* id, float* const pBindingData, const float min, const float max);
-void DrawAccordionDragVector3(const char* id, float* const pBindingData, const float min, const float max, const float speed);
+void DrawTableRowDragVector3(const char* id, float* const pBindingData, const float min, const float max);
+void DrawTableRowDragVector3(const char* id, float* const pBindingData, const float min, const float max, const float speed);
 
 ID3D11Buffer* CreateConstantBufferOrNull(void* pData, const UINT byteSize);
+constexpr const char* GetPrimitiveTopologyString(const D3D11_PRIMITIVE_TOPOLOGY topology);
 
 int WINAPI wWinMain(
 	_In_ HINSTANCE hInstance,
@@ -241,6 +258,21 @@ int WINAPI wWinMain(
 			ASSERT(false);
 
 			return hr;
+		}
+
+		D3D11_RASTERIZER_DESC wireframeState;
+		ZeroMemory(&wireframeState, sizeof(wireframeState));
+
+		wireframeState.FillMode = D3D11_FILL_WIREFRAME;
+		wireframeState.CullMode = D3D11_CULL_NONE;
+		wireframeState.DepthClipEnable = true;
+
+		hr = spDevice->CreateRasterizerState(&wireframeState, &spWireframeState);
+		if (FAILED(hr))
+		{
+			LogSystemError(hr, "CreateRasterizerState");
+
+			ASSERT(false);
 		}
 
 		// shader
@@ -402,14 +434,12 @@ int WINAPI wWinMain(
 			return hr;
 		}
 
-		sActor.pos = { 0.f, 0.f, 0.f };
-		sActor.scale = { 1.f, 1.f, 1.f };
-		sActor.rotation = { 0.f, 0.f, 0.f };
+		sActor.mesh.pInputLayout = spInputLayout;
 
 		sActor.mesh.vertices = {
-			{ { 0.f, 0.5f, 0.f }, {},{} },
-			{ { 0.5f, -0.5f, 0.f }, {}, {} },
-			{ { -0.5f, -0.5f, 0.f }, {}, {} }
+			{ { 0.f, 0.5f, 0.f }, {}, { 0.5f, 0.f } },
+			{ { 0.5f, -0.5f, 0.f }, {}, { 1.f, 1.f } },
+			{ { -0.5f, -0.5f, 0.f }, {}, { 0.f, 1.f } }
 		};
 
 		D3D11_BUFFER_DESC vertexBufferDesc;
@@ -427,7 +457,7 @@ int WINAPI wWinMain(
 
 		hr = spDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &spVertexBufferGPU);
 
-		sActor.mesh.vertexBufferGPU = spVertexBufferGPU;
+		sActor.mesh.pVertexBufferGPU = spVertexBufferGPU;
 
 		if (FAILED(hr))
 		{
@@ -466,8 +496,49 @@ int WINAPI wWinMain(
 			return hr;
 		}
 
-		sActor.mesh.indexBufferGPU = spIndexBufferGPU;
+		sActor.mesh.pIndexBufferGPU = spIndexBufferGPU;
 		sActor.mesh.primitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+		sActor.pos = { 0.f, 0.f, 0.f };
+		sActor.scale = { 1.f, 1.f, 1.f };
+		sActor.rotation = { 0.f, 0.f, 0.f };
+
+		sActor.material.pVertexShader = spVertexShader;
+		sActor.material.pPixelShader = spPixelShader;
+
+		hr = CreateDDSTextureFromFile(
+			spDevice,
+			TEXT("seafloor.dds"),
+			reinterpret_cast<ID3D11Resource**>(&spTextureGPU),
+			&spTextureViewGPU
+		);
+
+		if (FAILED(hr))
+		{
+			LogSystemError(hr, "CreateDDSTextureFromFile");
+
+			ASSERT(false);
+		}
+
+		D3D11_SAMPLER_DESC samplerDesc;
+		ZeroMemory(&samplerDesc, sizeof(samplerDesc));
+
+		samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+
+		hr = spDevice->CreateSamplerState(&samplerDesc, &spSamplerState);
+
+		if (FAILED(hr))
+		{
+			LogSystemError(hr, "CreateSamplerState");
+
+			ASSERT(false);
+		}
+
+		sActor.material.pTextureViewGPU = spTextureViewGPU;
+		sActor.material.pSamplerState = spSamplerState;
 
 		spCBWorldMatrixGPU = CreateConstantBufferOrNull(&sCBWorldMatrix, sizeof(CBWorldMatrix));
 		spCBMainCameraGPU = CreateConstantBufferOrNull(&sCBMainCamera, sizeof(CBMainCamera));
@@ -616,7 +687,7 @@ int WINAPI wWinMain(
 				// set and clear rendertarget
 				spDeviceContext->OMSetRenderTargets(1, &spRenderTargetViewGPU, nullptr);
 
-				constexpr float clearColor[] = { 0.f, 0.f, 0.f, 1.f };
+				constexpr float clearColor[] = { 1.f, 1.f, 1.f, 1.f };
 				spDeviceContext->ClearRenderTargetView(spRenderTargetViewGPU, clearColor);
 
 				spDeviceContext->ClearDepthStencilView(spDepthStencilViewGPU, D3D11_CLEAR_DEPTH, 1.f, 255);
@@ -625,24 +696,26 @@ int WINAPI wWinMain(
 				UINT stride = sizeof(Vertex);
 				UINT offset = 0;
 
-				spDeviceContext->IASetInputLayout(spInputLayout);
+				spDeviceContext->IASetInputLayout(sActor.mesh.pInputLayout);
 				spDeviceContext->IASetPrimitiveTopology(sActor.mesh.primitiveTopology);
-				spDeviceContext->IASetVertexBuffers(0, 1, &sActor.mesh.vertexBufferGPU, &stride, &offset);
-				spDeviceContext->IASetIndexBuffer(sActor.mesh.indexBufferGPU, DXGI_FORMAT_R32_UINT, 0);
+				spDeviceContext->IASetVertexBuffers(0, 1, &sActor.mesh.pVertexBufferGPU, &stride, &offset);
+				spDeviceContext->IASetIndexBuffer(sActor.mesh.pIndexBufferGPU, DXGI_FORMAT_R32_UINT, 0);
 
 				// vs
 				ID3D11Buffer* constantBuffers[] = {
 					spCBWorldMatrixGPU, spCBMainCameraGPU
 				};
 
-				spDeviceContext->VSSetShader(spVertexShader, nullptr, 0);
+				spDeviceContext->VSSetShader(sActor.material.pVertexShader, nullptr, 0);
 				spDeviceContext->VSSetConstantBuffers(0, ARRAYSIZE(constantBuffers), constantBuffers);
 
 				// rs
 				spDeviceContext->RSSetViewports(1, &sViewport);
 
 				// ps
-				spDeviceContext->PSSetShader(spPixelShader, nullptr, 0);
+				spDeviceContext->PSSetShader(sActor.material.pPixelShader, nullptr, 0);
+				spDeviceContext->PSSetShaderResources(0, 1, &sActor.material.pTextureViewGPU);
+				spDeviceContext->PSSetSamplers(0, 1, &sActor.material.pSamplerState);
 				spDeviceContext->PSSetConstantBuffers(0, ARRAYSIZE(constantBuffers), constantBuffers);
 
 				// draw
@@ -658,6 +731,7 @@ int WINAPI wWinMain(
 			{
 				ImGuiIO& io = ImGui::GetIO();
 				ImGui::Text("FPS: %d", static_cast<int>(io.Framerate));
+				ImGui::Checkbox("Wireframe", &sbWireframe);
 
 				if (ImGui::BeginChild("World", { 0, 0 }, true))
 				{
@@ -678,7 +752,7 @@ int WINAPI wWinMain(
 						ImGui::SliderFloat("FieldOfView", &sMainCamera.fov, 75.f, 105.f, "%.f");
 						ImGui::DragFloat("Yaw", &sMainCamera.yaw, 1.f, -MAX_ANGLE, MAX_ANGLE, "%.1f", ImGuiSliderFlags_WrapAround);
 						ImGui::DragFloat("Pitch", &sMainCamera.pitch, 1.f, -MAX_ANGLE, MAX_ANGLE, "%.1f", ImGuiSliderFlags_WrapAround);
-						DrawAccordionDragVector3("Position", reinterpret_cast<float*>(&sMainCamera.pos), sWidth * -0.5f, sWidth * 0.5f);
+						DrawTableRowDragVector3("Position", reinterpret_cast<float*>(&sMainCamera.pos), sWidth * -0.5f, sWidth * 0.5f);
 
 						ImGui::Separator();
 					}
@@ -689,9 +763,27 @@ int WINAPI wWinMain(
 
 					ImGui::PushID("Actor");
 					{
-						DrawAccordionDragVector3("Position", reinterpret_cast<float*>(&sActor.pos), sWidth * -0.5f, sWidth * 0.5f);
-						DrawAccordionDragVector3("Scale", reinterpret_cast<float*>(&sActor.scale), 1.f, 100.f);
-						DrawAccordionDragVector3("Rotation", reinterpret_cast<float*>(&sActor.rotation), -MAX_ANGLE, MAX_ANGLE, 2.f);
+						if (ImGui::CollapsingHeader("Transform"))
+						{
+							DrawTableRowDragVector3("Position", reinterpret_cast<float*>(&sActor.pos), sWidth * -0.5f, sWidth * 0.5f);
+							DrawTableRowDragVector3("Scale", reinterpret_cast<float*>(&sActor.scale), 1.f, 100.f);
+							DrawTableRowDragVector3("Rotation", reinterpret_cast<float*>(&sActor.rotation), -MAX_ANGLE, MAX_ANGLE, 2.f);
+						}
+
+						if (ImGui::CollapsingHeader("Mesh"))
+						{
+							ImGui::Text("Vertices: %d", sActor.mesh.vertices.size());
+							ImGui::Text("Indices: %d", sActor.mesh.vertices.size());
+							ImGui::Text("Topology: %s", GetPrimitiveTopologyString(sActor.mesh.primitiveTopology));
+						}
+
+						if (ImGui::CollapsingHeader("Material"))
+						{
+							ImGui::Text("Texture: %s", "seafloor.dds");
+							ImGui::Text("SamplerState: %s", "WrapLinear");
+							ImGui::Text("VertexShader: %s", "VSBasic.hlsl");
+							ImGui::Text("PixelShader: %s", "PSBasic.hlsl");
+						}
 					}
 					ImGui::PopID();
 				}
@@ -715,6 +807,9 @@ int WINAPI wWinMain(
 
 		SafeRelease(spCBMainCameraGPU);
 		SafeRelease(spCBWorldMatrixGPU);
+		SafeRelease(spSamplerState);
+		SafeRelease(spTextureViewGPU);
+		SafeRelease(spTextureGPU);
 		SafeRelease(spIndexBufferGPU);
 		SafeRelease(spVertexBufferGPU);
 		SafeRelease(spInputLayout);
@@ -723,6 +818,7 @@ int WINAPI wWinMain(
 		SafeRelease(spVertexShader);
 		SafeRelease(spVertexShaderBlob);
 
+		SafeRelease(spWireframeState);
 		SafeRelease(spDepthStencilViewGPU);
 		SafeRelease(spDepthStencilBuffer);
 		SafeRelease(spRenderTargetViewGPU);
@@ -763,7 +859,27 @@ LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_KEYDOWN:
-		sKeyCodes[wParam] = true;
+		switch (wParam)
+		{
+		case VK_F4:
+			{
+				sbWireframe = !sbWireframe;
+
+				if (sbWireframe)
+				{
+					spDeviceContext->RSSetState(spWireframeState);
+				}
+				else
+				{
+					spDeviceContext->RSSetState(nullptr);
+				}
+			}
+			break;
+
+		default:
+			sKeyCodes[wParam] = true;
+			break;
+		}
 		break;
 
 	case WM_KEYUP:
@@ -911,15 +1027,15 @@ void OnResize(const int width, const int height)
 	sViewport.Height = static_cast<FLOAT>(height);
 }
 
-void DrawAccordionDragVector3(const char* id,
+void DrawTableRowDragVector3(const char* id,
 	float* const pBindingData,
 	const float min,
 	const float max)
 {
-	DrawAccordionDragVector3(id, pBindingData, min, max, 0.1f);
+	DrawTableRowDragVector3(id, pBindingData, min, max, 0.1f);
 }
 
-void DrawAccordionDragVector3(
+void DrawTableRowDragVector3(
 	const char* id,
 	float* const pBindingData,
 	const float min,
@@ -929,36 +1045,34 @@ void DrawAccordionDragVector3(
 {
 	constexpr int DIMENSION = 3;
 
-	if (ImGui::CollapsingHeader(id))
+	ImGui::Text(id);
+	if (ImGui::BeginTable("XYZ", DIMENSION, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
 	{
-		if (ImGui::BeginTable("XYZ", DIMENSION, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
+		constexpr const char* const XYZ[] = {
+			"X", "Y", "Z"
+		};
+
+		for (const char* const tag : XYZ)
 		{
-			constexpr const char* const XYZ[] = {
-				"X", "Y", "Z"
-			};
-
-			for (const char* const tag : XYZ)
-			{
-				ImGui::TableSetupColumn(tag);
-			}
-			ImGui::TableHeadersRow();
-
-			ImGui::TableNextRow();
-
-			for (int i = 0; i < DIMENSION; ++i)
-			{
-				ImGui::TableSetColumnIndex(i);
-				ImGui::SetNextItemWidth(-FLT_MIN);
-
-				ImGui::PushID(XYZ[i]);
-				ImGui::DragFloat(id, pBindingData + i, speed, min, max, "%.1f");
-				ImGui::PopID();
-
-				pBindingData[i] = std::clamp(pBindingData[i], min, max);
-			}
+			ImGui::TableSetupColumn(tag);
 		}
-		ImGui::EndTable();
+		ImGui::TableHeadersRow();
+
+		ImGui::TableNextRow();
+
+		for (int i = 0; i < DIMENSION; ++i)
+		{
+			ImGui::TableSetColumnIndex(i);
+			ImGui::SetNextItemWidth(-FLT_MIN);
+
+			ImGui::PushID(XYZ[i]);
+			ImGui::DragFloat(id, pBindingData + i, speed, min, max, "%.1f");
+			ImGui::PopID();
+
+			pBindingData[i] = std::clamp(pBindingData[i], min, max);
+		}
 	}
+	ImGui::EndTable();
 }
 
 ID3D11Buffer* CreateConstantBufferOrNull(void* pData, const UINT byteSize)
@@ -987,4 +1101,17 @@ ID3D11Buffer* CreateConstantBufferOrNull(void* pData, const UINT byteSize)
 	}
 
 	return pRet;
+}
+
+constexpr const char* GetPrimitiveTopologyString(const D3D11_PRIMITIVE_TOPOLOGY topology)
+{
+	switch (topology)
+	{
+	case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+		return "TriangleList";
+
+	default:
+		ASSERT(false);
+		return "";
+	}
 }
