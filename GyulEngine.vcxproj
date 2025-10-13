@@ -139,8 +139,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Actor.h" />
+    <ClInclude Include="CameraComponent.h" />
     <ClInclude Include="ComHelper.h" />
+    <ClInclude Include="Component.h" />
     <ClInclude Include="DebugHelper.h" />
+    <ClInclude Include="ETypeForRenderer.h" />
+    <ClInclude Include="GameCore.h" />
+    <ClInclude Include="IUIDrawable.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshComponent.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="StringHelper.h" />
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h" />
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDSTextureLoader.h" />
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DirectXHelpers.h" />
@@ -157,10 +168,19 @@
     <ClInclude Include="ThirdParty\ImGui\Inc\imstb_rectpack.h" />
     <ClInclude Include="ThirdParty\ImGui\Inc\imstb_textedit.h" />
     <ClInclude Include="ThirdParty\ImGui\Inc\imstb_truetype.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Actor.cpp" />
+    <ClCompile Include="CameraComponent.cpp" />
+    <ClCompile Include="Component.cpp" />
     <ClCompile Include="DebugHelper.cpp" />
+    <ClCompile Include="GameCore.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshComponent.cpp" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp" />
     <ClCompile Include="ThirdParty\DirectXTK\Src\SimpleMath.cpp" />
     <ClCompile Include="ThirdParty\DirectXTK\Src\WICTextureLoader.cpp" />
@@ -179,13 +199,6 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PSBasic.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-    </FxCompile>
-    <FxCompile Include="PSStub.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>

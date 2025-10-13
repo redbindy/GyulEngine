@@ -1,11 +1,13 @@
 #include "DebugHelper.h"
 
+#include "StringHelper.h"
+
 enum
 {
 	DEFAULT_BUFFER_SIZE = 256
 };
 
-void LogSystemError(const long errorCode, const char* const msg)
+void LogSystemError(const char* filename, const int line, const long errorCode, const char* const msg)
 {
 	ASSERT(msg != nullptr);
 
@@ -15,11 +17,14 @@ void LogSystemError(const long errorCode, const char* const msg)
 
 	const TCHAR* const pErrorMessage = err.ErrorMessage();
 
-	const int byteLength = lstrlen(pErrorMessage) * sizeof(TCHAR);
 	char buffer[DEFAULT_BUFFER_SIZE + 1] = { '\0', };
 
-	WideCharToMultiByte(CP_ACP, 0, pErrorMessage, -1, buffer, byteLength, nullptr, nullptr);
-	buffer[byteLength] = '\0';
+	ConvertWideToMulti(buffer, pErrorMessage);
 
-	std::cerr << msg << ' ' << buffer << std::endl;
+	std::cerr
+		<< filename << ' '
+		<< line << "\n: "
+		<< msg << ' '
+		<< buffer
+		<< std::endl;
 }

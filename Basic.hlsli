@@ -14,14 +14,14 @@ struct PSBasicInput
 
 typedef PSBasicInput VSBasicOutput;
 
-cbuffer CBWorldMatrix : register(b0)
-{
-    float4x4 world;
-};
-
-cbuffer CBMainCamera : register(b1)
+cbuffer CBFrame : register(b0)
 {
     float3 cameraPos;
     float dummy;
     float4x4 viewProj;
+};
+
+cbuffer CBWorldMatrix : register(b1)
+{
+    float4x4 world;
 };

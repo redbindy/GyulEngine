@@ -30,4 +30,5 @@
 #define ASSERT
 #endif /* DEBUG */
 
-void LogSystemError(const long errorCode, const char* const msg);
+#define LOG_SYSTEM_ERROR(errorCode, msg) LogSystemError(__FILE__, __LINE__, errorCode, msg)
+void LogSystemError(const char* filename, const int line, const long errorCode, const char* const msg);
