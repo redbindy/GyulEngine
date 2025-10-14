@@ -46,6 +46,16 @@ public:
 		return mRotation;
 	}
 
+	inline void SetPosition(const Vector3& pos)
+	{
+		mPosition = pos;
+	}
+
+	inline void SetRotation(const Vector3& rotation)
+	{
+		mRotation = rotation;
+	}
+
 private:
 	const char* mLabel;
 

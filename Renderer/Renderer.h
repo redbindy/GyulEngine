@@ -17,6 +17,9 @@ class Material;
 class MeshComponent;
 class CameraComponent;
 
+// 구조체에 대해서 초기화 경고 끄기
+#pragma warning(push)
+#pragma warning(disable : 26495)
 struct CBFrame
 {
 	Vector3 cameraPos;
@@ -30,6 +33,7 @@ struct CBWorldMatrix
 	Matrix world;
 };
 static_assert(sizeof(CBWorldMatrix) % 16 == 0);
+#pragma warning(pop)
 
 class Renderer final : IUIDrawable
 {
@@ -125,6 +129,16 @@ public:
 		ASSERT(static_cast<uint8_t>(type) < static_cast<uint8_t>(ESamplerType::COUNT));
 
 		return mSamplerStateMap[static_cast<uint8_t>(type)];
+	}
+
+	inline void SetMainCamera(CameraComponent* const pCameraComponent)
+	{
+		mpMainCamera = pCameraComponent;
+	}
+
+	inline void UnSetMainCamera()
+	{
+		mpMainCamera = nullptr;
 	}
 
 private:

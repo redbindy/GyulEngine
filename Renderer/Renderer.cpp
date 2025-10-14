@@ -4,10 +4,11 @@
 
 #include "DDSTextureLoader.h"
 
+#include "CommonDefs.h"
 #include "ComHelper.h"
 #include "Mesh.h"
 #include "Material.h"
-#include "MeshComponent.h"
+#include "Component/MeshComponent.h"
 
 enum
 {
@@ -272,9 +273,9 @@ void Renderer::DrawUI()
 
 		ImGui::Checkbox("VSync", &mbVSync);
 		ImGui::SameLine();
-		ImGui::Checkbox("Wireframe", &mbWireframe);
+		ImGui::Checkbox("Wireframe(F4)", &mbWireframe);
 
-		constexpr int TARGET_FRAME_RATE_COUNT = 4;
+		constexpr int TARGET_FRAME_RATE_COUNT = 1;
 
 		// TODO: 모니터에 맞는 옵션 선택지 추가
 		constexpr const char* const targetFrameRates[TARGET_FRAME_RATE_COUNT] = {
@@ -315,10 +316,10 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	Renderer& renderer = *spInstance;
 
 	// 공유 혹은 기본 리소스들
-	bool bResult = renderer.TryCreateVertexShaderAndInputLayout(TEXT("VSBasic.hlsl"), EVertexType::POS_NORMAL_UV);
+	bool bResult = renderer.TryCreateVertexShaderAndInputLayout(SHADER_PATH("VSBasic.hlsl"), EVertexType::POS_NORMAL_UV);
 	ASSERT(bResult);
 
-	bResult = renderer.TryCreatePixelShader(TEXT("PSBasic.hlsl"));
+	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBasic.hlsl"));
 	ASSERT(bResult);
 
 	HRESULT hr = S_OK;
@@ -351,7 +352,7 @@ bool Renderer::TryInitialize(const HWND hWnd)
 		}
 	}
 
-	bResult = renderer.TryCreateTextureView(TEXT("Default.dds"));
+	bResult = renderer.TryCreateTextureView(RESOURCE_PATH("Default.dds"));
 	ASSERT(bResult);
 
 	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBFrame, sizeof(CBFrame), 0, renderer.mpCBFrameGPU);

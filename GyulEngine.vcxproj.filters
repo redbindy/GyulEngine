@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
     <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
@@ -12,9 +8,6 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{35e2eb89-6fff-48f1-abdf-50b89e550c4f}</UniqueIdentifier>
     </Filter>
     <Filter Include="DirectXTK">
       <UniqueIdentifier>{5d0c23d2-0953-4388-bd20-63101e16b08c}</UniqueIdentifier>
@@ -40,14 +33,39 @@
     <Filter Include="ImGui\Src\Backends">
       <UniqueIdentifier>{61ed30cd-4367-471d-b157-8ede30ec41b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{ada87fb1-6d81-410b-9a53-6f1ac8d1905e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{04f5b0ea-a9b9-41fb-adea-fa64c4da6523}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Main\.h">
+      <UniqueIdentifier>{1931f102-7b53-44b5-a5a7-383f0a336d44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main\.cpp">
+      <UniqueIdentifier>{0bfb55ba-64f1-4fed-bdd8-5fcaf759600d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\.h">
+      <UniqueIdentifier>{3b38139f-aae7-4f82-afe9-047c737d9bb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\.cpp">
+      <UniqueIdentifier>{1bd91dd9-6aae-4aa1-8aea-1e0fdd7cbe31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Shader">
+      <UniqueIdentifier>{35e2eb89-6fff-48f1-abdf-50b89e550c4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\.h">
+      <UniqueIdentifier>{2dd7228d-6c68-47b9-b86f-ab166c3db949}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\.cpp">
+      <UniqueIdentifier>{d3edfafe-69b6-4eb2-b0e9-959a6e9597fd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DebugHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ComHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h">
       <Filter>DirectXTK\Inc</Filter>
     </ClInclude>
@@ -96,50 +114,56 @@
     <ClInclude Include="ThirdParty\ImGui\Inc\Backends\imgui_impl_win32.h">
       <Filter>ImGui\Inc\Backends</Filter>
     </ClInclude>
-    <ClInclude Include="GameCore.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Actor.h">
-      <Filter>Header Files</Filter>
+      <Filter>Main\.h</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ComHelper.h">
+      <Filter>Main\.h</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="DebugHelper.h">
+      <Filter>Main\.h</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="GameCore.h">
+      <Filter>Main\.h</Filter>
     </ClInclude>
     <ClInclude Include="IUIDrawable.h">
-      <Filter>Header Files</Filter>
+      <Filter>Main\.h</Filter>
     </ClInclude>
-    <ClInclude Include="Component.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ETypeForRenderer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Renderer\ETypeForRenderer.h">
+      <Filter>Renderer\.h</Filter>
     </ClInclude>
     <ClInclude Include="StringHelper.h">
-      <Filter>Header Files</Filter>
+      <Filter>Main\.h</Filter>
     </ClInclude>
-    <ClInclude Include="CameraComponent.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Renderer\Material.h">
+      <Filter>Renderer\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Mesh.h">
+      <Filter>Renderer\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Renderer.h">
+      <Filter>Renderer\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Vertex.h">
+      <Filter>Renderer\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\CameraComponent.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\CameraControllerComponent.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Component.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\MeshComponent.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonDefs.h">
+      <Filter>Main\.h</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DebugHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
       <Filter>DirectXTK\Src</Filter>
     </ClCompile>
@@ -170,34 +194,43 @@
     <ClCompile Include="ThirdParty\ImGui\Src\Backends\imgui_impl_win32.cpp">
       <Filter>ImGui\Src\Backends</Filter>
     </ClCompile>
-    <ClCompile Include="GameCore.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Actor.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Main\.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="DebugHelper.cpp">
+      <Filter>Main\.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="GameCore.cpp">
+      <Filter>Main\.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="Component.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Main.cpp">
+      <Filter>Main\.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="MeshComponent.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Renderer\Material.cpp">
+      <Filter>Renderer\.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="CameraComponent.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Renderer\Mesh.cpp">
+      <Filter>Renderer\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\Renderer.cpp">
+      <Filter>Renderer\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\MeshComponent.cpp">
+      <Filter>Component\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Component.cpp">
+      <Filter>Component\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\CameraControllerComponent.cpp">
+      <Filter>Component\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\CameraComponent.cpp">
+      <Filter>Component\.cpp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Basic.hlsli">
-      <Filter>Shader</Filter>
+      <Filter>Renderer\Shader</Filter>
     </None>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
       <Filter>DirectXTK\Inc</Filter>
@@ -207,11 +240,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="VSBasic.hlsl">
-      <Filter>Shader</Filter>
+    <FxCompile Include="Renderer\Shader\PSBasic.hlsl">
+      <Filter>Renderer\Shader</Filter>
     </FxCompile>
-    <FxCompile Include="PSBasic.hlsl">
-      <Filter>Shader</Filter>
+    <FxCompile Include="Renderer\Shader\VSBasic.hlsl">
+      <Filter>Renderer\Shader</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

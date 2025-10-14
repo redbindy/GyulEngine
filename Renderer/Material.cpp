@@ -1,5 +1,6 @@
 #include "Material.h"
 
+#include "CommonDefs.h"
 #include "Renderer.h"
 #include "StringHelper.h"
 
@@ -9,13 +10,13 @@ enum
 };
 
 Material::Material()
-	: mTexturePath(TEXT("Default.dds"))
+	: mTexturePath(RESOURCE_PATH("Default.dds"))
 	, mpTextureViewGPU(nullptr)
 	, mSamplerType(ESamplerType::WRAP_LINEAR)
 	, mpSamplerState(nullptr)
-	, mVertexShaderPath(TEXT("VSBasic.hlsl"))
+	, mVertexShaderPath(SHADER_PATH("VSBasic.hlsl"))
 	, mpVertexShader(nullptr)
-	, mPixelShaderPath(TEXT("PSBasic.hlsl"))
+	, mPixelShaderPath(SHADER_PATH("PSBasic.hlsl"))
 	, mpPixelShader(nullptr)
 {
 	Renderer* const pRenderer = Renderer::GetInstance();
@@ -44,7 +45,7 @@ void Material::Bind(ID3D11DeviceContext& deviceContext) const
 
 void Material::DrawUI()
 {
-	if (ImGui::CollapsingHeader("Material"))
+	if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		char buffer[DEFAULT_BUFFER_SIZE];
 		ConvertWideToMulti(buffer, mTexturePath.c_str());
@@ -58,5 +59,7 @@ void Material::DrawUI()
 
 		ConvertWideToMulti(buffer, mPixelShaderPath.c_str());
 		ImGui::Text("PixelShader: %s", buffer);
+
+		ImGui::TreePop();
 	}
 }

@@ -16,10 +16,15 @@ public:
 	virtual void DrawUI() override;
 
 private:
-	bool mbMain;
-	bool mbOrthogonoal;
+	bool mbOrthogonal;
 
-	float mNearPlane;
-	float mFarPlane;
+	// only orthogonal
+	float mViewWidth;
+	float mViewHeight;
+
+	float mNearZ;
+	float mFarZ;
+
+	// only perspective
 	float mFov;
 };

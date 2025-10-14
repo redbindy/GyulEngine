@@ -55,8 +55,8 @@ Mesh::~Mesh()
 
 void Mesh::Bind(ID3D11DeviceContext& deviceContext) const
 {
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
+	const UINT stride = sizeof(Vertex);
+	const UINT offset = 0;
 
 	deviceContext.IASetVertexBuffers(0, 1, &mpVertexBufferGPU, &stride, &offset);
 	deviceContext.IASetIndexBuffer(mpIndexBufferGPU, DXGI_FORMAT_R32_UINT, offset);
@@ -66,7 +66,7 @@ void Mesh::Bind(ID3D11DeviceContext& deviceContext) const
 
 void Mesh::DrawUI()
 {
-	if (ImGui::CollapsingHeader("Mesh"))
+	if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		ImGui::Text("Vertices: %d", mVertexCount);
 		ImGui::Text("Indices: %d", mIndexCount);
@@ -85,5 +85,7 @@ void Mesh::DrawUI()
 		}
 
 		ImGui::Text("Topology: %s", topologyString);
+
+		ImGui::TreePop();
 	}
 }

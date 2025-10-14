@@ -1,8 +1,8 @@
 #include "Actor.h"
 
 #include "DebugHelper.h"
-#include "Renderer.h"
-#include "Component.h"
+#include "Renderer/Renderer.h"
+#include "Component/Component.h"
 
 enum
 {
@@ -67,12 +67,9 @@ void Actor::DrawUI()
 {
 	ImGui::PushID(mLabel);
 	{
-		if (ImGui::BeginChild(mLabel, { 0, 0 }, true))
+		if (ImGui::TreeNodeEx(mLabel, ImGuiTreeNodeFlags_Framed))
 		{
-			ImGui::Text(mLabel);
-			ImGui::Separator();
-
-			if (ImGui::CollapsingHeader("Transform"))
+			if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				if (ImGui::BeginTable("XYZ", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
 				{
@@ -88,9 +85,9 @@ void Actor::DrawUI()
 
 				const int width = pRenderer->GetWidth();
 
-				ImGui::DragFloat3("Position", reinterpret_cast<float*>(&mPosition), 1.f, width * -0.5f, width * 0.5f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+				ImGui::DragFloat3("Position", reinterpret_cast<float*>(&mPosition), 0.1f, width * -0.5f, width * 0.5f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 
-				ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&mScale), 1.f, -100.f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+				ImGui::DragFloat3("Scale", reinterpret_cast<float*>(&mScale), 0.1f, -100.f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 
 				constexpr float DEGREE_TO_RADIAN_COFF = XM_PI / 180.f;
 				constexpr float RADIAN_TO_DEGREE_COFF = 180.f / XM_PI;
@@ -99,17 +96,20 @@ void Actor::DrawUI()
 				{
 					const float MAX_DEGREE = 360.f;
 
-					ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&mRotation), 1.f, -MAX_DEGREE, MAX_DEGREE, "%.1f", ImGuiSliderFlags_WrapAround);
+					ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&mRotation), 0.1f, -MAX_DEGREE, MAX_DEGREE, "%.1f", ImGuiSliderFlags_WrapAround);
 				}
 				mRotation *= DEGREE_TO_RADIAN_COFF;
+
+				ImGui::TreePop();
 			}
 
 			for (Component* const pComponent : mComponents)
 			{
 				pComponent->DrawUI();
 			}
+
+			ImGui::TreePop();
 		}
-		ImGui::EndChild();
 	}
 	ImGui::PopID();
 }

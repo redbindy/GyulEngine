@@ -112,7 +112,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)ThirdParty\DirectXTK\Inc;$(ProjectDir)ThirdParty\ImGui\Inc;$(ProjectDir)ThirdParty\ImGui\Inc\Backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\DirectXTK\Inc;$(ProjectDir)ThirdParty\ImGui\Inc;$(ProjectDir)ThirdParty\ImGui\Inc\Backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -140,17 +140,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
-    <ClInclude Include="CameraComponent.h" />
+    <ClInclude Include="CommonDefs.h" />
+    <ClInclude Include="Component\CameraComponent.h" />
+    <ClInclude Include="Component\CameraControllerComponent.h" />
     <ClInclude Include="ComHelper.h" />
-    <ClInclude Include="Component.h" />
+    <ClInclude Include="Component\Component.h" />
     <ClInclude Include="DebugHelper.h" />
-    <ClInclude Include="ETypeForRenderer.h" />
+    <ClInclude Include="Renderer\ETypeForRenderer.h" />
     <ClInclude Include="GameCore.h" />
     <ClInclude Include="IUIDrawable.h" />
-    <ClInclude Include="Material.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="MeshComponent.h" />
-    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Component\MeshComponent.h" />
+    <ClInclude Include="Renderer\Material.h" />
+    <ClInclude Include="Renderer\Mesh.h" />
+    <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Renderer\Vertex.h" />
     <ClInclude Include="StringHelper.h" />
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h" />
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDSTextureLoader.h" />
@@ -168,19 +171,19 @@
     <ClInclude Include="ThirdParty\ImGui\Inc\imstb_rectpack.h" />
     <ClInclude Include="ThirdParty\ImGui\Inc\imstb_textedit.h" />
     <ClInclude Include="ThirdParty\ImGui\Inc\imstb_truetype.h" />
-    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
-    <ClCompile Include="CameraComponent.cpp" />
-    <ClCompile Include="Component.cpp" />
+    <ClCompile Include="Component\CameraComponent.cpp" />
+    <ClCompile Include="Component\Component.cpp" />
     <ClCompile Include="DebugHelper.cpp" />
     <ClCompile Include="GameCore.cpp" />
+    <ClCompile Include="Component\CameraControllerComponent.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Material.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="MeshComponent.cpp" />
-    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Component\MeshComponent.cpp" />
+    <ClCompile Include="Renderer\Material.cpp" />
+    <ClCompile Include="Renderer\Mesh.cpp" />
+    <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp" />
     <ClCompile Include="ThirdParty\DirectXTK\Src\SimpleMath.cpp" />
     <ClCompile Include="ThirdParty\DirectXTK\Src\WICTextureLoader.cpp" />
@@ -198,11 +201,11 @@
     <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="PSBasic.hlsl">
+    <FxCompile Include="Renderer\Shaders\PSBasic.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="VSBasic.hlsl">
+    <FxCompile Include="Renderer\Shaders\VSBasic.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
     </FxCompile>

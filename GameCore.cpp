@@ -1,9 +1,10 @@
 #include "GameCore.h"
 
-#include "Renderer.h"
+#include "Renderer/Renderer.h"
 #include "Actor.h"
-#include "MeshComponent.h"
-#include "CameraComponent.h"
+#include "Component/MeshComponent.h"
+#include "Component/CameraComponent.h"
+#include "Component/CameraControllerComponent.h"
 
 GameCore* GameCore::spInstance = nullptr;
 
@@ -75,12 +76,6 @@ GameCore::GameCore(const HINSTANCE hInstance)
 
 		ASSERT(false);
 	}
-
-	mpActor = new Actor("Actor");
-	MeshComponent* const pMeshComponent = new MeshComponent(mpActor);
-
-	mpCameraActor = new Actor("MainCamera");
-	CameraComponent* const pCameraComponent = new CameraComponent(mpActor);
 }
 
 GameCore::~GameCore()
@@ -151,6 +146,7 @@ int GameCore::Run()
 
 			prev = curr;
 
+			mpCameraActor->Update(deltaTime);
 			mpActor->Update(deltaTime);
 
 			// render
@@ -164,6 +160,7 @@ int GameCore::Run()
 					{
 						DrawUI();
 						pRenderer->DrawUI();
+						mpCameraActor->DrawUI();
 						mpActor->DrawUI();
 					}
 					ImGui::End();
@@ -205,6 +202,14 @@ bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
 
 	ShowWindow(spInstance->mhWnd, nShowCmd);
 	UpdateWindow(spInstance->mhWnd);
+
+	GameCore& core = *spInstance;
+	core.mpActor = new Actor("Actor");
+	MeshComponent* const pMeshComponent = new MeshComponent(core.mpActor);
+
+	core.mpCameraActor = new Actor("MainCamera");
+	CameraComponent* const pCameraComponent = new CameraComponent(core.mpCameraActor);
+	CameraControllerComponent* const pCameraControllerComponent = new CameraControllerComponent(core.mpCameraActor);
 
 	return SUCCEEDED(spInstance->mErrorCode);
 }
@@ -255,6 +260,21 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 
 	case WM_KEYUP:
 		mbKeyPressed[wParam] = false;
+		break;
+
+	case WM_MOUSEMOVE:
+		{
+			mMousePosition.x = LOWORD(lParam);
+			mMousePosition.y = HIWORD(lParam);
+		}
+		break;
+
+	case WM_MBUTTONDOWN:
+		mbKeyPressed[VK_MBUTTON] = true;
+		break;
+
+	case WM_MBUTTONUP:
+		mbKeyPressed[VK_MBUTTON] = false;
 		break;
 
 	default:

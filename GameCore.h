@@ -2,8 +2,13 @@
 
 #include <Windows.h>
 
+#include "SimpleMath.h"
+
 #include "DebugHelper.h"
 #include "IUIDrawable.h"
+
+using namespace DirectX;
+using namespace SimpleMath;
 
 class Actor;
 
@@ -48,6 +53,21 @@ public:
 		return mbKeyPressed[keyCode];
 	}
 
+	inline Vector2 GetMousePosition() const
+	{
+		return mMousePosition;
+	}
+
+	inline float GetMouseX() const
+	{
+		return mMousePosition.x;
+	}
+
+	inline float GetMouseY() const
+	{
+		return mMousePosition.y;
+	}
+
 protected:
 	virtual void DrawUI() override;
 
@@ -59,6 +79,8 @@ private:
 	HRESULT mErrorCode;
 
 	bool mbKeyPressed[UINT8_MAX];
+
+	Vector2 mMousePosition;
 
 	Actor* mpActor;
 	Actor* mpCameraActor;

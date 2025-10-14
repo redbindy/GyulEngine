@@ -1,9 +1,9 @@
 #include "MeshComponent.h"
 
 #include "DebugHelper.h"
-#include "Renderer.h"
-#include "Mesh.h"
-#include "Material.h"
+#include "Renderer/Renderer.h"
+#include "Renderer/Mesh.h"
+#include "Renderer/Material.h"
 #include "Actor.h"
 
 MeshComponent::MeshComponent(Actor* const pOwner)
@@ -62,16 +62,15 @@ void MeshComponent::Draw(ID3D11DeviceContext& deviceContext) const
 
 void MeshComponent::DrawUI()
 {
-	const char* label = GetLabel();
+	const char* const label = GetLabel();
 
 	ImGui::PushID(label);
-	if (ImGui::BeginChild(label, { 0, 0 }, true))
+	if (ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::Text(label);
-
 		mpMesh->DrawUI();
 		mpMaterial->DrawUI();
+
+		ImGui::TreePop();
 	}
-	ImGui::EndChild();
 	ImGui::PopID();
 }
