@@ -6,6 +6,11 @@
 #include "Component/CameraComponent.h"
 #include "Component/CameraControllerComponent.h"
 
+enum
+{
+	DEFAULT_BUFFER_SIZE = 256
+};
+
 GameCore* GameCore::spInstance = nullptr;
 
 static const TCHAR* const CLASS_NAME = TEXT("GyulEngine");
@@ -15,9 +20,13 @@ GameCore::GameCore(const HINSTANCE hInstance)
 	, mhWnd(nullptr)
 	, mErrorCode(S_OK)
 	, mbKeyPressed{ false, }
-	, mpActor(nullptr)
+	, mActors()
+	, mPendingActors()
 {
 	ASSERT(hInstance != nullptr);
+
+	mActors.reserve(DEFAULT_BUFFER_SIZE);
+	mPendingActors.reserve(DEFAULT_BUFFER_SIZE);
 
 	WNDCLASSEX wc;
 	ZeroMemory(&wc, sizeof(wc));
@@ -80,8 +89,10 @@ GameCore::GameCore(const HINSTANCE hInstance)
 
 GameCore::~GameCore()
 {
-	delete mpCameraActor;
-	delete mpActor;
+	for (Actor* const pActor : mActors)
+	{
+		delete pActor;
+	}
 
 	Renderer::Destroy();
 
@@ -146,8 +157,10 @@ int GameCore::Run()
 
 			prev = curr;
 
-			mpCameraActor->Update(deltaTime);
-			mpActor->Update(deltaTime);
+			for (Actor* const pActor : mActors)
+			{
+				pActor->Update(deltaTime);
+			}
 
 			// render
 			pRenderer->BeginFrame();
@@ -160,14 +173,48 @@ int GameCore::Run()
 					{
 						DrawUI();
 						pRenderer->DrawUI();
-						mpCameraActor->DrawUI();
-						mpActor->DrawUI();
+
+						constexpr const char* const OBJECTS_LABEL = "Objects";
+						if (ImGui::BeginChild(OBJECTS_LABEL, ImVec2(0, 0), ImGuiChildFlags_Border))
+						{
+							ImGui::Text(OBJECTS_LABEL);
+							ImGui::Separator();
+
+							for (Actor* const pActor : mActors)
+							{
+								pActor->DrawUI();
+							}
+
+							ImGui::Separator();
+
+							if (ImGui::Button("AddActor"))
+							{
+								onAddActor();
+							}
+						}
+						ImGui::EndChild();
 					}
 					ImGui::End();
 				}
 				pRenderer->EndUI();
 			}
 			pRenderer->EndFrame();
+
+			// cleanup actors
+			for (Actor* const pActor : mActors)
+			{
+				if (pActor->IsAlive())
+				{
+					mPendingActors.push_back(pActor);
+				}
+				else
+				{
+					delete pActor;
+				}
+			}
+
+			mActors.swap(mPendingActors);
+			mPendingActors.clear();
 		}
 	}
 
@@ -204,12 +251,17 @@ bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
 	UpdateWindow(spInstance->mhWnd);
 
 	GameCore& core = *spInstance;
-	core.mpActor = new Actor("Actor");
-	MeshComponent* const pMeshComponent = new MeshComponent(core.mpActor);
 
-	core.mpCameraActor = new Actor("MainCamera");
-	CameraComponent* const pCameraComponent = new CameraComponent(core.mpCameraActor);
-	CameraControllerComponent* const pCameraControllerComponent = new CameraControllerComponent(core.mpCameraActor);
+	Actor* pMeshActor = new Actor("MeshActor");
+	MeshComponent* const pMeshComponent = new MeshComponent(pMeshActor);
+
+	core.mActors.push_back(pMeshActor);
+
+	Actor* pCameraActor = new Actor("MainCamera");
+	CameraComponent* const pCameraComponent = new CameraComponent(pCameraActor);
+	CameraControllerComponent* const pCameraControllerComponent = new CameraControllerComponent(pCameraActor);
+
+	core.mActors.push_back(pCameraActor);
 
 	return SUCCEEDED(spInstance->mErrorCode);
 }
@@ -282,6 +334,15 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 	}
 
 	return 0;
+}
+
+void GameCore::onAddActor()
+{
+	char actorName[DEFAULT_BUFFER_SIZE];
+	sprintf(actorName, "Actor%d", static_cast<int>(mActors.size()));
+
+	Actor* const pActor = new Actor(actorName);
+	mActors.push_back(pActor);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

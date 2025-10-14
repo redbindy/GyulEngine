@@ -82,14 +82,16 @@ private:
 
 	Vector2 mMousePosition;
 
-	Actor* mpActor;
-	Actor* mpCameraActor;
+	std::vector<Actor*> mActors;
+	std::vector<Actor*> mPendingActors;
 
 private:
 	GameCore(const HINSTANCE hInstance);
 	~GameCore();
 
 	LRESULT CALLBACK wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, const LPARAM lParam);
+
+	void onAddActor();
 };
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);

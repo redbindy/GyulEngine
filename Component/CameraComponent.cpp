@@ -6,6 +6,8 @@
 CameraComponent::CameraComponent(Actor* const pOwner)
 	: Component(pOwner, "CameraComponent")
 	, mbOrthogonal(false)
+	, mViewWidth(2.f)
+	, mViewHeight(2.f)
 	, mNearZ(0.1f)
 	, mFarZ(100.f)
 	, mFov(XMConvertToRadians(105.f))

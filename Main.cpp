@@ -1,5 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
-
 #if defined(_DEBUG) || defined(DEBUG)
 #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
 #endif

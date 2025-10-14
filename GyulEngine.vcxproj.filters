@@ -229,21 +229,21 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Basic.hlsli">
-      <Filter>Renderer\Shader</Filter>
-    </None>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
       <Filter>DirectXTK\Inc</Filter>
     </None>
     <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter">
       <Filter>ImGui\Inc</Filter>
     </None>
+    <None Include="Renderer\Shaders\Basic.hlsli">
+      <Filter>Renderer\Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Renderer\Shader\PSBasic.hlsl">
+    <FxCompile Include="Renderer\Shaders\PSBasic.hlsl">
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
-    <FxCompile Include="Renderer\Shader\VSBasic.hlsl">
+    <FxCompile Include="Renderer\Shaders\VSBasic.hlsl">
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
   </ItemGroup>

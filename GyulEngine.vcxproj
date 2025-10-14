@@ -110,7 +110,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\DirectXTK\Inc;$(ProjectDir)ThirdParty\ImGui\Inc;$(ProjectDir)ThirdParty\ImGui\Inc\Backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
@@ -196,7 +196,7 @@
     <ClCompile Include="ThirdParty\ImGui\Src\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Basic.hlsli" />
+    <None Include="Renderer\Shaders\Basic.hlsli" />
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl" />
     <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter" />
   </ItemGroup>

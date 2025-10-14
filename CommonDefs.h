@@ -5,3 +5,8 @@
 
 #define RESOURCE_FOLDER TEXT("./Resources/")
 #define RESOURCE_PATH(resourceStrAscii) (RESOURCE_FOLDER TEXT(resourceStrAscii))
+
+enum EConstant
+{
+	MAX_LABEL_LENGTH = 128
+};

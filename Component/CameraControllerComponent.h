@@ -21,5 +21,19 @@ public:
 	virtual void DrawUI() override;
 
 private:
+	enum class EMoveKey : uint8_t
+	{
+		FRONT,
+		BACK,
+		LEFT,
+		RIGHT,
+		COUNT
+	};
+
+private:
 	Vector2 mPrevMousePosition;
+
+	float mSpeed;
+
+	uint8_t mMoveKeys[static_cast<uint8_t>(EMoveKey::COUNT)];
 };

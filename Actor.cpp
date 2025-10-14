@@ -1,22 +1,29 @@
 #include "Actor.h"
 
 #include "DebugHelper.h"
+#include "GameCore.h"
 #include "Renderer/Renderer.h"
 #include "Component/Component.h"
 
 enum
 {
-	DEFAULT_BUFFER_COUNT = 8
+	DEFAULT_BUFFER_SIZE = 8,
 };
 
 Actor::Actor(const char* const label)
-	: mLabel(label)
+	: mLabel{ '\0', }
+	, mbAlive(true)
 	, mPosition(0.f, 0.f, 0.f)
 	, mScale(1.f, 1.f, 1.f)
 	, mRotation(0.f, 0.f, 0.f)
 	, mComponents()
 {
-	mComponents.reserve(DEFAULT_BUFFER_COUNT);
+	ASSERT(label != nullptr);
+
+	mComponents.reserve(DEFAULT_BUFFER_SIZE);
+
+	strncpy(mLabel, label, MAX_LABEL_LENGTH);
+	mLabel[MAX_LABEL_LENGTH - 1] = '\0';
 }
 
 Actor::~Actor()
@@ -67,6 +74,17 @@ void Actor::DrawUI()
 {
 	ImGui::PushID(mLabel);
 	{
+		ImGui::Text(mLabel);
+		constexpr const char* const REMOVE_LABEL = "Remove";
+
+		const ImVec2 buttonSize = ImGui::CalcTextSize(REMOVE_LABEL);
+		const ImVec2 region = ImGui::GetContentRegionAvail();
+		const ImGuiStyle& style = ImGui::GetStyle();
+
+		ImGui::SameLine(ImGui::GetCursorPosX() + region.x - (buttonSize.x + style.ItemSpacing.x));
+
+		mbAlive = !ImGui::Button(REMOVE_LABEL);
+
 		if (ImGui::TreeNodeEx(mLabel, ImGuiTreeNodeFlags_Framed))
 		{
 			if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))

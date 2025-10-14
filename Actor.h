@@ -1,7 +1,10 @@
 #pragma once
 
+#include <string>
+
 #include "SimpleMath.h"
 
+#include "CommonDefs.h"
 #include "IUIDrawable.h"
 
 using namespace DirectX;
@@ -31,6 +34,11 @@ public:
 		return mLabel;
 	}
 
+	inline bool IsAlive() const
+	{
+		return mbAlive;
+	}
+
 	inline Vector3 GetPosition() const
 	{
 		return mPosition;
@@ -57,7 +65,8 @@ public:
 	}
 
 private:
-	const char* mLabel;
+	char mLabel[MAX_LABEL_LENGTH];
+	bool mbAlive;
 
 	// transform
 	Vector3 mPosition;
