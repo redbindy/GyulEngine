@@ -41,8 +41,19 @@ void Actor::Update(const float deltaTime)
 
 	for (Component* const pComponent : mComponents)
 	{
+		if (!pComponent->IsAlive())
+		{
+			delete pComponent;
+
+			continue;
+		}
+
 		pComponent->Update(deltaTime);
+		mPendingComponents.push_back(pComponent);
 	}
+
+	mComponents.swap(mPendingComponents);
+	mPendingComponents.clear();
 }
 
 void Actor::AddComponent(Component* const pComponent)
@@ -72,10 +83,43 @@ void Actor::RemoveComponent(Component* const pComponent)
 
 void Actor::DrawUI()
 {
+	ImGui::Separator();
+
 	ImGui::PushID(mLabel);
 	{
-		ImGui::Text(mLabel);
-		constexpr const char* const REMOVE_LABEL = "Remove";
+		if (!mbRenaming)
+		{
+			ImGui::Text(mLabel);
+
+			if (ImGui::IsItemHovered() &&
+				(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) || ImGui::IsKeyPressed(ImGuiKey_F2)))
+			{
+				GameCore* const pGameCore = GameCore::GetInstance();
+
+				pGameCore->SuspendUpdates();
+
+				mbRenaming = true;
+			}
+		}
+		else
+		{
+			ImGui::SetKeyboardFocusHere();
+			if (ImGui::InputText("##rename", mTempBuffer, MAX_LABEL_LENGTH, ImGuiInputTextFlags_EnterReturnsTrue))
+			{
+				if (strlen(mTempBuffer) != 0)
+				{
+					strcpy(mLabel, mTempBuffer);
+				}
+
+				GameCore* const pGameCore = GameCore::GetInstance();
+
+				pGameCore->ResumeUpdates();
+
+				mbRenaming = false;
+			}
+		}
+
+		constexpr const char* const REMOVE_LABEL = "RemoveActor";
 
 		const ImVec2 buttonSize = ImGui::CalcTextSize(REMOVE_LABEL);
 		const ImVec2 region = ImGui::GetContentRegionAvail();
@@ -87,6 +131,34 @@ void Actor::DrawUI()
 
 		if (ImGui::TreeNodeEx(mLabel, ImGuiTreeNodeFlags_Framed))
 		{
+			constexpr const char* const POPUP_LABEL = "Select Component";
+			if (ImGui::Button("AddComponent"))
+			{
+				ImGui::OpenPopup(POPUP_LABEL);
+			}
+
+			bool bOpen = true;
+			if (ImGui::BeginPopupModal(POPUP_LABEL, &bOpen, ImGuiWindowFlags_AlwaysAutoResize))
+			{
+				ImGui::Text("Choose a component to add: ");
+				ImGui::Separator();
+
+				int selectedNumber = -1;
+
+				constexpr int componentCount = ComponentGenerator::GetComponentCount();
+				for (int i = 0; i < componentCount; ++i)
+				{
+					if (ImGui::Selectable(ComponentGenerator::COMPONENT_NAMES[i], selectedNumber == i))
+					{
+						selectedNumber = i;
+
+						ComponentGenerator::sConstructors[i](this);
+					}
+				}
+
+				ImGui::EndPopup();
+			}
+
 			if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 			{
 				if (ImGui::BeginTable("XYZ", 3, ImGuiTableFlags_SizingStretchSame | ImGuiTableFlags_BordersInnerV))
@@ -125,6 +197,8 @@ void Actor::DrawUI()
 			{
 				pComponent->DrawUI();
 			}
+
+			ImGui::Separator();
 
 			ImGui::TreePop();
 		}

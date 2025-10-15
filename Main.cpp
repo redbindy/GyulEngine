@@ -1,5 +1,6 @@
 #if defined(_DEBUG) || defined(DEBUG)
 #pragma comment(linker, "/entry:wWinMainCRTStartup /subsystem:console")
+#include <crtdbg.h>
 #endif
 
 #include <Windows.h>
@@ -29,6 +30,10 @@ int WINAPI wWinMain(
 		}
 	}
 	GameCore::Destroy();
+
+#if defined(DEBUG) || defined(_DEBUG)
+	_CrtDumpMemoryLeaks();
+#endif
 
 	return exitCode;
 }

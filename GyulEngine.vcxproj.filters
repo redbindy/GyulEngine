@@ -162,6 +162,9 @@
     <ClInclude Include="CommonDefs.h">
       <Filter>Main\.h</Filter>
     </ClInclude>
+    <ClInclude Include="Component\ComponentGenerator.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">

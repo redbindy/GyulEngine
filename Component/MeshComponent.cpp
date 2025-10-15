@@ -13,7 +13,8 @@ MeshComponent::MeshComponent(Actor* const pOwner)
 {
 	Renderer* const pRenderer = Renderer::GetInstance();
 
-	mpMesh = pRenderer->GetMeshOrNull(TEXT("Triangle"));
+	// mpMesh = pRenderer->GetMeshOrNull(TEXT("Triangle"));
+	mpMesh = pRenderer->GetMeshOrNull(TEXT("Cube"));
 	ASSERT(mpMesh != nullptr);
 
 	mpMaterial = pRenderer->GetMaterialOrNull(TEXT("Basic"));
@@ -62,6 +63,8 @@ void MeshComponent::Draw(ID3D11DeviceContext& deviceContext) const
 
 void MeshComponent::DrawUI()
 {
+	Component::DrawUI();
+
 	const char* const label = GetLabel();
 
 	ImGui::PushID(label);

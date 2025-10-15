@@ -9,6 +9,8 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Component/MeshComponent.h"
+#include "Component/CameraComponent.h"
+#include "Actor.h"
 
 enum
 {
@@ -42,7 +44,9 @@ Renderer::Renderer(const HWND hWnd)
 	, mHeight(0)
 	, mTargetFrameRate(120)
 	, mbVSync(false)
-	, mpMainCamera(nullptr)
+	, mClearColor{ 1.f, 1.f, 1.f, 1.f }
+	, mCameraComponents()
+	, mSelectedNumber(-1)
 {
 	ASSERT(hWnd != nullptr);
 
@@ -52,6 +56,7 @@ Renderer::Renderer(const HWND hWnd)
 	mMeshMap.reserve(DEFAULT_BUFFER_SIZE);
 	mMaterialMap.reserve(DEFAULT_BUFFER_SIZE);
 	mTextureViewMap.reserve(DEFAULT_BUFFER_SIZE);
+	mCameraComponents.reserve(DEFAULT_BUFFER_SIZE);
 
 	// d3d
 	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
@@ -228,9 +233,7 @@ void Renderer::BeginFrame()
 	ASSERT(mpDeviceContext != nullptr);
 	ASSERT(mpSwapChain != nullptr);
 
-	constexpr float clearColor[4] = { 1.f, 1.f, 1.f, 1.f };
-
-	mpDeviceContext->ClearRenderTargetView(mpRenderTargetViewGPU, clearColor);
+	mpDeviceContext->ClearRenderTargetView(mpRenderTargetViewGPU, mClearColor);
 	mpDeviceContext->ClearDepthStencilView(mpDepthStencilViewGPU, D3D11_CLEAR_DEPTH, 1.f, 255);
 
 	mpDeviceContext->RSSetViewports(1, &mViewport);
@@ -284,6 +287,22 @@ void Renderer::DrawUI()
 
 		int index = 0;
 		ImGui::Combo("FrameRate", reinterpret_cast<int*>(&index), targetFrameRates, TARGET_FRAME_RATE_COUNT);
+
+		ImGui::SliderFloat4("ClearColor", mClearColor, 0.f, 1.f, "%.1f");
+
+		for (int i = 0; i < mCameraComponents.size(); ++i)
+		{
+			CameraComponent* const pCameraComponent = mCameraComponents[i];
+
+			const Actor* const pOwner = pCameraComponent->GetOwner();
+
+			ImGui::RadioButton(pOwner->GetLabel(), &mSelectedNumber, i);
+		}
+
+		if (!mCameraComponents.empty())
+		{
+			mCameraComponents[mSelectedNumber]->SetActive();
+		}
 	}
 	ImGui::PopID();
 }
@@ -368,8 +387,11 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	renderer.mpDeviceContext->VSSetConstantBuffers(0, 2, pConstantBuffers);
 	renderer.mpDeviceContext->PSSetConstantBuffers(0, 2, pConstantBuffers);
 
-	Mesh* const pTriangle = new Mesh();
+	Mesh* const pTriangle = Shape::CreateTriangleAlloc();
 	renderer.mMeshMap.insert({ TEXT("Triangle"), pTriangle });
+
+	Mesh* const pCube = Shape::CreateCubeAlloc();
+	renderer.mMeshMap.insert({ TEXT("Cube"), pCube });
 
 	Material* const pBasicMaterial = new Material();
 	renderer.mMaterialMap.insert({ TEXT("Basic"), pBasicMaterial });
@@ -750,6 +772,34 @@ void Renderer::RemoveMeshComponent(MeshComponent* pMeshComponent)
 	VECTOR_ITER iter = std::find(mMeshComponents.begin(), mMeshComponents.end(), pMeshComponent);
 
 	mMeshComponents.erase(iter);
+
+#undef VECTOR_ITER
+}
+
+void Renderer::AddCameraComponent(CameraComponent* const pCameraComponent)
+{
+	ASSERT(pCameraComponent != nullptr);
+
+	if (mCameraComponents.empty())
+	{
+		mSelectedNumber = 0;
+	}
+
+	mCameraComponents.push_back(pCameraComponent);
+}
+
+void Renderer::RemoveCameraComponent(CameraComponent* const pCameraComponent)
+{
+	ASSERT(pCameraComponent != nullptr);
+
+#define VECTOR_ITER std::vector<CameraComponent*>::iterator
+
+	VECTOR_ITER iter = std::find(mCameraComponents.begin(), mCameraComponents.end(), pCameraComponent);
+
+	if (iter != mCameraComponents.end())
+	{
+		mCameraComponents.erase(iter);
+	}
 
 #undef VECTOR_ITER
 }

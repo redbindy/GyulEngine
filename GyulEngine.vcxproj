@@ -145,6 +145,7 @@
     <ClInclude Include="Component\CameraControllerComponent.h" />
     <ClInclude Include="ComHelper.h" />
     <ClInclude Include="Component\Component.h" />
+    <ClInclude Include="Component\ComponentGenerator.h" />
     <ClInclude Include="DebugHelper.h" />
     <ClInclude Include="Renderer\ETypeForRenderer.h" />
     <ClInclude Include="GameCore.h" />

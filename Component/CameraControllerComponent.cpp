@@ -73,6 +73,8 @@ void CameraControllerComponent::Update(const float deltaTime)
 
 void CameraControllerComponent::DrawUI()
 {
+	Component::DrawUI();
+
 	const char* const label = GetLabel();
 
 	ImGui::PushID(label);

@@ -78,6 +78,9 @@ public:
 	void AddMeshComponent(MeshComponent* pMeshComponent);
 	void RemoveMeshComponent(MeshComponent* pMeshComponent);
 
+	void AddCameraComponent(CameraComponent* const pCameraComponent);
+	void RemoveCameraComponent(CameraComponent* const pCameraComponent);
+
 	static bool TryInitialize(const HWND hWnd);
 
 	inline static Renderer* GetInstance()
@@ -131,16 +134,6 @@ public:
 		return mSamplerStateMap[static_cast<uint8_t>(type)];
 	}
 
-	inline void SetMainCamera(CameraComponent* const pCameraComponent)
-	{
-		mpMainCamera = pCameraComponent;
-	}
-
-	inline void UnSetMainCamera()
-	{
-		mpMainCamera = nullptr;
-	}
-
 private:
 	static Renderer* spInstance;
 
@@ -188,9 +181,12 @@ private:
 	UINT mTargetFrameRate;
 	bool mbVSync;
 
+	float mClearColor[4];
+
 	std::vector<MeshComponent*> mMeshComponents;
 
-	CameraComponent* mpMainCamera;
+	std::vector<CameraComponent*> mCameraComponents;
+	int mSelectedNumber;
 
 private:
 	Renderer(const HWND hWnd);

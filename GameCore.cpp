@@ -157,9 +157,12 @@ int GameCore::Run()
 
 			prev = curr;
 
-			for (Actor* const pActor : mActors)
+			if (!mbSuspending)
 			{
-				pActor->Update(deltaTime);
+				for (Actor* const pActor : mActors)
+				{
+					pActor->Update(deltaTime);
+				}
 			}
 
 			// render
@@ -249,19 +252,6 @@ bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
 
 	ShowWindow(spInstance->mhWnd, nShowCmd);
 	UpdateWindow(spInstance->mhWnd);
-
-	GameCore& core = *spInstance;
-
-	Actor* pMeshActor = new Actor("MeshActor");
-	MeshComponent* const pMeshComponent = new MeshComponent(pMeshActor);
-
-	core.mActors.push_back(pMeshActor);
-
-	Actor* pCameraActor = new Actor("MainCamera");
-	CameraComponent* const pCameraComponent = new CameraComponent(pCameraActor);
-	CameraControllerComponent* const pCameraControllerComponent = new CameraControllerComponent(pCameraActor);
-
-	core.mActors.push_back(pCameraActor);
 
 	return SUCCEEDED(spInstance->mErrorCode);
 }

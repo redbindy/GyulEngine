@@ -3,8 +3,12 @@
 #include "Renderer/Renderer.h"
 #include "Actor.h"
 
+constexpr float NDC_WIDTH = 2.f;
+constexpr float NDC_HEIGHT = 2.f;
+
 CameraComponent::CameraComponent(Actor* const pOwner)
 	: Component(pOwner, "CameraComponent")
+	, mbActive(false)
 	, mbOrthogonal(false)
 	, mViewWidth(2.f)
 	, mViewHeight(2.f)
@@ -14,11 +18,23 @@ CameraComponent::CameraComponent(Actor* const pOwner)
 {
 	Renderer* const pRenderer = Renderer::GetInstance();
 
-	pRenderer->SetMainCamera(this);
+	pRenderer->AddCameraComponent(this);
+}
+
+CameraComponent::~CameraComponent()
+{
+	Renderer* const pRenderer = Renderer::GetInstance();
+
+	pRenderer->RemoveCameraComponent(this);
 }
 
 void CameraComponent::Update(const float deltaTime)
 {
+	if (!mbActive)
+	{
+		return;
+	}
+
 	Actor* const pOwner = GetOwner();
 
 	CBFrame buffer;
@@ -46,9 +62,6 @@ void CameraComponent::Update(const float deltaTime)
 	Matrix proj;
 	if (mbOrthogonal)
 	{
-		constexpr float NDC_WIDTH = 2.f;
-		constexpr float NDC_HEIGHT = 2.f;
-
 		proj = XMMatrixOrthographicLH(NDC_WIDTH, NDC_HEIGHT, mNearZ, mFarZ);
 	}
 	else
@@ -63,10 +76,14 @@ void CameraComponent::Update(const float deltaTime)
 	buffer.viewProj = viewProj.Transpose();
 
 	pRenderer->UpdateCBFrame(buffer);
+
+	mbActive = false;
 }
 
 void CameraComponent::DrawUI()
 {
+	Component::DrawUI();
+
 	const char* const label = GetLabel();
 
 	ImGui::PushID(label);
@@ -92,8 +109,8 @@ void CameraComponent::DrawUI()
 		}
 		else
 		{
-			ImGui::DragFloat("ViewWidth", &mViewWidth, 0.5f, 0.01f, 2.f, "0.2f", ImGuiSliderFlags_AlwaysClamp);
-			ImGui::DragFloat("ViewHeight", &mViewHeight, 0.5f, 0.01f, 2.f, "0.2f", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::DragFloat("ViewWidth", &mViewWidth, 0.5f, 0.01f, NDC_WIDTH, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::DragFloat("ViewHeight", &mViewHeight, 0.5f, 0.01f, NDC_HEIGHT, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 		}
 
 		ImGui::DragFloat("NearZ", &mNearZ, 0.5f, 0.01f, mFarZ - 0.01f, "%.2f", ImGuiSliderFlags_AlwaysClamp);

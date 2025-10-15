@@ -15,11 +15,16 @@ public:
 	Component& operator=(Component&& other) = delete;
 
 	virtual void Update(const float deltaTime) = 0;
-	virtual void DrawUI() = 0;
+	virtual void DrawUI();
 
 	inline const char* GetLabel() const
 	{
 		return mLabel;
+	}
+
+	inline bool IsAlive() const
+	{
+		return mbAlive;
 	}
 
 	inline Actor* GetOwner() const
@@ -32,6 +37,7 @@ protected:
 
 private:
 	const char* mLabel;
+	bool mbAlive;
 
 	Actor* const mpOwner;
 };

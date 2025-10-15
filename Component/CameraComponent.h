@@ -6,7 +6,7 @@ class CameraComponent final : public Component
 {
 public:
 	CameraComponent(Actor* const pOwner);
-	virtual ~CameraComponent() = default;
+	virtual ~CameraComponent();
 	CameraComponent(const CameraComponent& other) = delete;
 	CameraComponent& operator=(const CameraComponent& other) = delete;
 	CameraComponent(CameraComponent&& other) = delete;
@@ -15,7 +15,14 @@ public:
 	virtual void Update(const float deltaTime) override;
 	virtual void DrawUI() override;
 
+	inline void SetActive()
+	{
+		mbActive = true;
+	}
+
 private:
+	bool mbActive;
+
 	bool mbOrthogonal;
 
 	// only orthogonal

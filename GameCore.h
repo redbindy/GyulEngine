@@ -68,6 +68,16 @@ public:
 		return mMousePosition.y;
 	}
 
+	inline void SuspendUpdates()
+	{
+		mbSuspending = true;
+	}
+
+	inline void ResumeUpdates()
+	{
+		mbSuspending = false;
+	}
+
 protected:
 	virtual void DrawUI() override;
 
@@ -84,6 +94,7 @@ private:
 
 	std::vector<Actor*> mActors;
 	std::vector<Actor*> mPendingActors;
+	bool mbSuspending;
 
 private:
 	GameCore(const HINSTANCE hInstance);

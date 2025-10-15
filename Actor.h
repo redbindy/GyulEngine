@@ -6,6 +6,7 @@
 
 #include "CommonDefs.h"
 #include "IUIDrawable.h"
+#include "Component/ComponentGenerator.h"
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
@@ -66,6 +67,8 @@ public:
 
 private:
 	char mLabel[MAX_LABEL_LENGTH];
+	char mTempBuffer[MAX_LABEL_LENGTH];
+	bool mbRenaming;
 	bool mbAlive;
 
 	// transform
@@ -75,4 +78,7 @@ private:
 
 	// component
 	std::vector<Component*> mComponents;
+	std::vector<Component*> mPendingComponents;
+
+	bool mHasComponent[ComponentGenerator::GetComponentCount()];
 };

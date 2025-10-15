@@ -8,7 +8,12 @@
 class Mesh final : public IUIDrawable
 {
 public:
-	Mesh();
+	Mesh(
+		const Vertex* const vertices,
+		const UINT vertexCount,
+		const int32_t* const indices,
+		const UINT indexCount
+	);
 	~Mesh();
 	Mesh(const Mesh& other) = delete;
 	Mesh& operator=(const Mesh& other) = delete;
@@ -33,4 +38,10 @@ private:
 	EVertexType mVertexType;
 	ID3D11InputLayout* mpInputLayout;
 	D3D11_PRIMITIVE_TOPOLOGY mPrimitiveTopology;
+};
+
+namespace Shape
+{
+	Mesh* CreateTriangleAlloc();
+	Mesh* CreateCubeAlloc();
 };
