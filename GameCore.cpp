@@ -1,5 +1,7 @@
 #include "GameCore.h"
 
+#include <algorithm>
+
 #include "Renderer/Renderer.h"
 #include "Actor.h"
 #include "Component/MeshComponent.h"
@@ -22,11 +24,13 @@ GameCore::GameCore(const HINSTANCE hInstance)
 	, mbKeyPressed{ false, }
 	, mActors()
 	, mPendingActors()
+	, mPickingListeners()
 {
 	ASSERT(hInstance != nullptr);
 
 	mActors.reserve(DEFAULT_BUFFER_SIZE);
 	mPendingActors.reserve(DEFAULT_BUFFER_SIZE);
+	mPickingListeners.reserve(DEFAULT_BUFFER_SIZE);
 
 	WNDCLASSEX wc;
 	ZeroMemory(&wc, sizeof(wc));
@@ -126,10 +130,9 @@ int GameCore::Run()
 		else
 		{
 			// update
-			Renderer* pRenderer = Renderer::GetInstance();
-			ASSERT(pRenderer != nullptr);
+			Renderer& renderer = Renderer::GetInstance();
 
-			const UINT targetFrameRate = pRenderer->GetTargetFrameRate();
+			const UINT targetFrameRate = renderer.GetTargetFrameRate();
 			const float frameTime = 1.f / static_cast<float>(targetFrameRate);
 
 			float deltaTime;
@@ -165,17 +168,42 @@ int GameCore::Run()
 				}
 			}
 
-			// render
-			pRenderer->BeginFrame();
+			// hovering
+			Ray ray;
+			if (renderer.TryGetMouseRay(mMousePosition, ray))
 			{
-				pRenderer->RenderScene();
+				IPickingListener* pPickedListener = nullptr;
+				float dist = D3D11_FLOAT32_MAX;
 
-				pRenderer->BeginUI();
+				for (IPickingListener* const pListener : mPickingListeners)
+				{
+					float collisionDist = D3D11_FLOAT32_MAX;
+
+					if (pListener->CheckCollision(ray, collisionDist) && collisionDist < dist)
+					{
+						dist = collisionDist;
+
+						pPickedListener = pListener;
+					}
+				}
+
+				if (pPickedListener != nullptr)
+				{
+					pPickedListener->OnCollision();
+				}
+			}
+
+			// render
+			renderer.BeginFrame();
+			{
+				renderer.RenderScene();
+
+				renderer.BeginUI();
 				{
 					ImGui::Begin("MainPanel");
 					{
 						DrawUI();
-						pRenderer->DrawUI();
+						renderer.DrawUI();
 
 						constexpr const char* const OBJECTS_LABEL = "Objects";
 						if (ImGui::BeginChild(OBJECTS_LABEL, ImVec2(0, 0), ImGuiChildFlags_Border))
@@ -199,9 +227,9 @@ int GameCore::Run()
 					}
 					ImGui::End();
 				}
-				pRenderer->EndUI();
+				renderer.EndUI();
 			}
-			pRenderer->EndFrame();
+			renderer.EndFrame();
 
 			// cleanup actors
 			for (Actor* const pActor : mActors)
@@ -222,6 +250,28 @@ int GameCore::Run()
 	}
 
 	return (int)msg.wParam;
+}
+
+void GameCore::AddPickingListener(IPickingListener* const pListener)
+{
+	ASSERT(pListener != nullptr);
+
+	mPickingListeners.push_back(pListener);
+}
+
+void GameCore::RemovePickingListener(IPickingListener* const pListener)
+{
+	ASSERT(pListener != nullptr);
+
+#define VECTOR_ITER std::vector<IPickingListener*>::iterator
+
+	VECTOR_ITER iter = std::find(mPickingListeners.begin(), mPickingListeners.end(), pListener);
+	if (iter != mPickingListeners.end())
+	{
+		mPickingListeners.erase(iter);
+	}
+
+#undef VECTOR_ITER
 }
 
 void GameCore::DrawUI()
@@ -272,13 +322,12 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 	case WM_SIZE:
 		if (wParam != SIZE_MINIMIZED)
 		{
-			Renderer* pRenderer = Renderer::GetInstance();
-			ASSERT(pRenderer != nullptr);
+			Renderer& renderer = Renderer::GetInstance();
 
 			const int width = LOWORD(lParam);
 			const int height = HIWORD(lParam);
 
-			pRenderer->OnResize(width, height);
+			renderer.OnResize(width, height);
 		}
 		break;
 
@@ -287,10 +336,9 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 		{
 		case VK_F4:
 			{
-				Renderer* pRenderer = Renderer::GetInstance();
-				ASSERT(pRenderer != nullptr);
+				Renderer& renderer = Renderer::GetInstance();
 
-				pRenderer->SwitchWireframeMode();
+				renderer.SwitchWireframeMode();
 			}
 			break;
 

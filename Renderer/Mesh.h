@@ -29,6 +29,11 @@ public:
 		return mIndexCount;
 	}
 
+	BoundingSphere GetBoundingSphereLocal() const
+	{
+		return mBoundingSphereLocal;
+	}
+
 private:
 	ID3D11Buffer* mpVertexBufferGPU;
 	ID3D11Buffer* mpIndexBufferGPU;
@@ -38,6 +43,8 @@ private:
 	EVertexType mVertexType;
 	ID3D11InputLayout* mpInputLayout;
 	D3D11_PRIMITIVE_TOPOLOGY mPrimitiveTopology;
+
+	BoundingSphere mBoundingSphereLocal;
 };
 
 namespace Shape

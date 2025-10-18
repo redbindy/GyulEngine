@@ -1,6 +1,10 @@
 #pragma once
 
 #include "Component.h"
+#include "SimpleMath.h"
+
+using namespace DirectX;
+using namespace DirectX::SimpleMath;
 
 class CameraComponent final : public Component
 {
@@ -14,6 +18,8 @@ public:
 
 	virtual void Update(const float deltaTime) override;
 	virtual void DrawUI() override;
+
+	Matrix GetViewProjectionMatrix() const;
 
 	inline void SetActive()
 	{
@@ -34,4 +40,7 @@ private:
 
 	// only perspective
 	float mFov;
+
+	// viewProj
+	Matrix mViewProjMatrix;
 };

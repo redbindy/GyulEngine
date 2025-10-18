@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+#include <vector>
+
 #include "ComHelper.h"
 #include "Renderer.h"
 
@@ -16,11 +18,25 @@ Mesh::Mesh(
 	, mPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
 	, mVertexCount(vertexCount)
 	, mIndexCount(indexCount)
+	, mBoundingSphereLocal({ 0.f, 0.f, 0.f }, 1.f)
 {
-	Renderer* const pRenderer = Renderer::GetInstance();
-	ASSERT(pRenderer != nullptr);
+	Renderer& renderer = Renderer::GetInstance();
 
-	bool bResult = pRenderer->TryCreateBuffer(
+	Vector3 minVector(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
+	Vector3 maxVector = -minVector;
+
+	for (int i = 0; i < static_cast<int>(vertexCount); ++i)
+	{
+		const Vector3& pos = vertices[i].pos;
+
+		minVector = Vector3::Min(minVector, pos);
+		maxVector = Vector3::Max(maxVector, pos);
+	}
+
+	const Vector3 minToMax = maxVector - minVector;
+	mBoundingSphereLocal.Radius = minToMax.Length();
+
+	bool bResult = renderer.TryCreateBuffer(
 		EBufferType::VERTEX,
 		vertices,
 		sizeof(Vertex) * mVertexCount,
@@ -29,7 +45,7 @@ Mesh::Mesh(
 	);
 	ASSERT(bResult);
 
-	bResult = pRenderer->TryCreateBuffer(
+	bResult = renderer.TryCreateBuffer(
 		EBufferType::INDEX,
 		indices,
 		sizeof(int32_t) * mIndexCount,
@@ -38,7 +54,7 @@ Mesh::Mesh(
 	);
 	ASSERT(bResult);
 
-	mpInputLayout = pRenderer->GetInputLayout(EVertexType::POS_NORMAL_UV);
+	mpInputLayout = renderer.GetInputLayout(EVertexType::POS_NORMAL_UV);
 	ASSERT(mpInputLayout != nullptr);
 }
 

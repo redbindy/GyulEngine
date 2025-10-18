@@ -3,44 +3,42 @@
 #include "Renderer/Renderer.h"
 #include "Actor.h"
 
-constexpr float NDC_WIDTH = 2.f;
-constexpr float NDC_HEIGHT = 2.f;
-
 CameraComponent::CameraComponent(Actor* const pOwner)
 	: Component(pOwner, "CameraComponent")
 	, mbActive(false)
 	, mbOrthogonal(false)
-	, mViewWidth(2.f)
-	, mViewHeight(2.f)
+	, mViewWidth(1.f)
+	, mViewHeight(1.f)
 	, mNearZ(0.1f)
 	, mFarZ(100.f)
 	, mFov(XMConvertToRadians(105.f))
+	, mViewProjMatrix()
 {
-	Renderer* const pRenderer = Renderer::GetInstance();
+	Renderer& renderer = Renderer::GetInstance();
 
-	pRenderer->AddCameraComponent(this);
+	renderer.AddCameraComponent(this);
 }
 
 CameraComponent::~CameraComponent()
 {
-	Renderer* const pRenderer = Renderer::GetInstance();
+	Renderer& renderer = Renderer::GetInstance();
 
-	pRenderer->RemoveCameraComponent(this);
+	renderer.RemoveCameraComponent(this);
 }
 
 void CameraComponent::Update(const float deltaTime)
 {
+	ASSERT(deltaTime > 0.f);
+
 	if (!mbActive)
 	{
 		return;
 	}
 
+	CBFrame buffer;
 	Actor* const pOwner = GetOwner();
 
-	CBFrame buffer;
-
 	const Vector3 position = pOwner->GetPosition();
-	buffer.cameraPos = position;
 
 	const Vector3 rotation = pOwner->GetRotation();
 
@@ -54,15 +52,15 @@ void CameraComponent::Update(const float deltaTime)
 
 	const Matrix view = XMMatrixLookToLH(position, front, up);
 
-	Renderer* const pRenderer = Renderer::GetInstance();
+	Renderer& renderer = Renderer::GetInstance();
 
-	const int width = pRenderer->GetWidth();
-	const int height = pRenderer->GetHeight();
+	const int width = renderer.GetWidth();
+	const int height = renderer.GetHeight();
 
 	Matrix proj;
 	if (mbOrthogonal)
 	{
-		proj = XMMatrixOrthographicLH(NDC_WIDTH, NDC_HEIGHT, mNearZ, mFarZ);
+		proj = XMMatrixOrthographicLH(mViewWidth, mViewHeight, mNearZ, mFarZ);
 	}
 	else
 	{
@@ -71,11 +69,11 @@ void CameraComponent::Update(const float deltaTime)
 		proj = XMMatrixPerspectiveFovLH(mFov, aspectRatio, mNearZ, mFarZ);
 	}
 
-	const Matrix viewProj = view * proj;
+	mViewProjMatrix = view * proj;
 
-	buffer.viewProj = viewProj.Transpose();
+	buffer.viewProj = mViewProjMatrix.Transpose();
 
-	pRenderer->UpdateCBFrame(buffer);
+	renderer.UpdateCBFrame(buffer);
 
 	mbActive = false;
 }
@@ -109,8 +107,13 @@ void CameraComponent::DrawUI()
 		}
 		else
 		{
-			ImGui::DragFloat("ViewWidth", &mViewWidth, 0.5f, 0.01f, NDC_WIDTH, "%.2f", ImGuiSliderFlags_AlwaysClamp);
-			ImGui::DragFloat("ViewHeight", &mViewHeight, 0.5f, 0.01f, NDC_HEIGHT, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			Renderer& renderer = Renderer::GetInstance();
+
+			const float screenWidth = static_cast<float>(renderer.GetWidth());
+			const float screenHeight = static_cast<float>(renderer.GetHeight());
+
+			ImGui::DragFloat("ViewWidth", &mViewWidth, 0.5f, 0.01f, screenWidth, "%.2f", ImGuiSliderFlags_AlwaysClamp);
+			ImGui::DragFloat("ViewHeight", &mViewHeight, 0.5f, 0.01f, screenHeight, "%.2f", ImGuiSliderFlags_AlwaysClamp);
 		}
 
 		ImGui::DragFloat("NearZ", &mNearZ, 0.5f, 0.01f, mFarZ - 0.01f, "%.2f", ImGuiSliderFlags_AlwaysClamp);
@@ -120,3 +123,9 @@ void CameraComponent::DrawUI()
 	}
 	ImGui::PopID();
 }
+
+Matrix CameraComponent::GetViewProjectionMatrix() const
+{
+	return mViewProjMatrix;
+}
+

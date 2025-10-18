@@ -16,6 +16,7 @@ class Mesh;
 class Material;
 class MeshComponent;
 class CameraComponent;
+class DebugSphere;
 
 // 구조체에 대해서 초기화 경고 끄기
 #pragma warning(push)
@@ -66,6 +67,7 @@ public:
 	Mesh* GetMeshOrNull(const std::wstring& path) const;
 	Material* GetMaterialOrNull(const std::wstring& path) const;
 	ID3D11ShaderResourceView* GetTextureViewOrNull(const std::wstring& path) const;
+	ID3D11BlendState* GetBlendState() const;
 
 	bool TryCreateBuffer(
 		const EBufferType type,
@@ -81,13 +83,17 @@ public:
 	void AddCameraComponent(CameraComponent* const pCameraComponent);
 	void RemoveCameraComponent(CameraComponent* const pCameraComponent);
 
+	void SetDebugSphere(const Vector3 center, const float radius);
+
+	bool TryGetMouseRay(const Vector2 mousePos, Ray& ray) const;
+
 	static bool TryInitialize(const HWND hWnd);
 
-	inline static Renderer* GetInstance()
+	inline static Renderer& GetInstance()
 	{
 		ASSERT(spInstance != nullptr, "Please call Initialize first");
 
-		return spInstance;
+		return *spInstance;
 	}
 
 	inline static void Destroy()
@@ -158,6 +164,7 @@ private:
 	// om
 	ID3D11RenderTargetView* mpRenderTargetViewGPU;
 	ID3D11DepthStencilView* mpDepthStencilViewGPU;
+	ID3D11BlendState* mpBlendState;
 
 	// resources
 	ID3D11SamplerState* mSamplerStateMap[static_cast<int>(ESamplerType::COUNT)];
@@ -187,6 +194,9 @@ private:
 
 	std::vector<CameraComponent*> mCameraComponents;
 	int mSelectedNumber;
+
+	DebugSphere* mpDebugSphere;
+	bool mbDrawDebugSphere;
 
 private:
 	Renderer(const HWND hWnd);

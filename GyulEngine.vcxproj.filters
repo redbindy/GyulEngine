@@ -165,6 +165,12 @@
     <ClInclude Include="Component\ComponentGenerator.h">
       <Filter>Component\.h</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\DebugSphere.h">
+      <Filter>Renderer\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="IPickingListener.h">
+      <Filter>Main\.h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
@@ -230,6 +236,9 @@
     <ClCompile Include="Component\CameraComponent.cpp">
       <Filter>Component\.cpp</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\DebugBox.cpp">
+      <Filter>Renderer\.cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
@@ -247,6 +256,12 @@
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
     <FxCompile Include="Renderer\Shaders\VSBasic.hlsl">
+      <Filter>Renderer\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\PSBoundingSphere.hlsl">
+      <Filter>Renderer\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\VSBoundingSphere.hlsl">
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
   </ItemGroup>

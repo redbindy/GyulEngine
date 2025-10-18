@@ -1,6 +1,7 @@
 #include "MeshComponent.h"
 
 #include "DebugHelper.h"
+#include "GameCore.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/Mesh.h"
 #include "Renderer/Material.h"
@@ -11,23 +12,31 @@ MeshComponent::MeshComponent(Actor* const pOwner)
 	, mpMesh(nullptr)
 	, mpMaterial(nullptr)
 {
-	Renderer* const pRenderer = Renderer::GetInstance();
+	Renderer& renderer = Renderer::GetInstance();
 
-	// mpMesh = pRenderer->GetMeshOrNull(TEXT("Triangle"));
-	mpMesh = pRenderer->GetMeshOrNull(TEXT("Cube"));
+	// mpMesh = renderer->GetMeshOrNull(TEXT("Triangle"));
+	mpMesh = renderer.GetMeshOrNull(TEXT("Cube"));
 	ASSERT(mpMesh != nullptr);
 
-	mpMaterial = pRenderer->GetMaterialOrNull(TEXT("Basic"));
+	mpMaterial = renderer.GetMaterialOrNull(TEXT("Basic"));
 	ASSERT(mpMaterial != nullptr);
 
-	pRenderer->AddMeshComponent(this);
+	renderer.AddMeshComponent(this);
+
+	GameCore& gameCore = GameCore::GetInstance();
+
+	gameCore.AddPickingListener(this);
 }
 
 MeshComponent::~MeshComponent()
 {
-	Renderer* const pRenderer = Renderer::GetInstance();
+	Renderer& renderer = Renderer::GetInstance();
 
-	pRenderer->RemoveMeshComponent(this);
+	renderer.RemoveMeshComponent(this);
+
+	GameCore& gameCore = GameCore::GetInstance();
+
+	gameCore.RemovePickingListener(this);
 }
 
 void MeshComponent::Update(const float deltaTime)
@@ -42,21 +51,10 @@ void MeshComponent::Draw(ID3D11DeviceContext& deviceContext) const
 
 	Actor* const pActor = GetOwner();
 
-	const Vector3 pos = pActor->GetPosition();
-	const Matrix translation = Matrix::CreateTranslation(pos);
+	const Matrix transform = pActor->GetTransform();
 
-	const Vector3 scale = pActor->GetScale();
-	const Matrix scaleMat = Matrix::CreateScale(scale);
-
-	const Vector3 rotation = pActor->GetRotation();
-	const Matrix rotationX = Matrix::CreateRotationX(rotation.x);
-	const Matrix rotationY = Matrix::CreateRotationY(rotation.y);
-	const Matrix rotationZ = Matrix::CreateRotationZ(rotation.z);
-
-	const Matrix transform = scaleMat * rotationX * rotationY * rotationZ * translation;
-
-	Renderer* pRenderer = Renderer::GetInstance();
-	pRenderer->UpdateCBWorldMatrix({ transform.Transpose() });
+	Renderer& renderer = Renderer::GetInstance();
+	renderer.UpdateCBWorldMatrix({ transform.Transpose() });
 
 	deviceContext.DrawIndexed(mpMesh->GetIndexCount(), 0, 0);
 }
@@ -76,4 +74,34 @@ void MeshComponent::DrawUI()
 		ImGui::TreePop();
 	}
 	ImGui::PopID();
+}
+
+bool MeshComponent::CheckCollision(const Ray& ray, float& outDist)
+{
+	const BoundingSphere boundingSphereWorld = getBoundingSphereWorld();
+
+	return ray.Intersects(boundingSphereWorld, outDist);
+}
+
+void MeshComponent::OnCollision()
+{
+	const BoundingSphere boundingSphereWorld = getBoundingSphereWorld();
+
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.SetDebugSphere(boundingSphereWorld.Center, boundingSphereWorld.Radius);
+}
+
+inline BoundingSphere MeshComponent::getBoundingSphereWorld() const
+{
+	const BoundingSphere boundingSphereLocal = mpMesh->GetBoundingSphereLocal();
+
+	Actor& actor = *GetOwner();
+
+	const Matrix transform = actor.GetTransform();
+
+	BoundingSphere boundingSphereWorld;
+	boundingSphereLocal.Transform(boundingSphereWorld, transform);
+
+	return boundingSphereWorld;
 }

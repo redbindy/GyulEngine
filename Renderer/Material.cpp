@@ -19,19 +19,18 @@ Material::Material()
 	, mPixelShaderPath(SHADER_PATH("PSBasic.hlsl"))
 	, mpPixelShader(nullptr)
 {
-	Renderer* const pRenderer = Renderer::GetInstance();
-	ASSERT(pRenderer != nullptr);
+	Renderer& renderer = Renderer::GetInstance();
 
-	mpTextureViewGPU = pRenderer->GetTextureViewOrNull(mTexturePath.c_str());
+	mpTextureViewGPU = renderer.GetTextureViewOrNull(mTexturePath.c_str());
 	ASSERT(mpTextureViewGPU != nullptr);
 
-	mpSamplerState = pRenderer->GetSamplerState(mSamplerType);
+	mpSamplerState = renderer.GetSamplerState(mSamplerType);
 	ASSERT(mpSamplerState != nullptr);
 
-	mpVertexShader = pRenderer->GetVertexShaderOrNull(mVertexShaderPath.c_str());
+	mpVertexShader = renderer.GetVertexShaderOrNull(mVertexShaderPath.c_str());
 	ASSERT(mpVertexShader != nullptr);
 
-	mpPixelShader = pRenderer->GetPixelShaderOrNull(mPixelShaderPath.c_str());
+	mpPixelShader = renderer.GetPixelShaderOrNull(mPixelShaderPath.c_str());
 	ASSERT(mpPixelShader != nullptr);
 }
 

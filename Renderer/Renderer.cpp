@@ -11,6 +11,7 @@
 #include "Component/MeshComponent.h"
 #include "Component/CameraComponent.h"
 #include "Actor.h"
+#include "DebugSphere.h"
 
 enum
 {
@@ -31,6 +32,7 @@ Renderer::Renderer(const HWND hWnd)
 	, mPixelShaderMap()
 	, mpRenderTargetViewGPU(nullptr)
 	, mpDepthStencilViewGPU(nullptr)
+	, mpBlendState(nullptr)
 	, mSamplerStateMap{ nullptr, }
 	, mMeshMap()
 	, mMaterialMap()
@@ -47,6 +49,8 @@ Renderer::Renderer(const HWND hWnd)
 	, mClearColor{ 1.f, 1.f, 1.f, 1.f }
 	, mCameraComponents()
 	, mSelectedNumber(-1)
+	, mpDebugSphere(nullptr)
+	, mbDrawDebugSphere(nullptr)
 {
 	ASSERT(hWnd != nullptr);
 
@@ -155,6 +159,8 @@ Renderer::Renderer(const HWND hWnd)
 
 Renderer::~Renderer()
 {
+	delete mpDebugSphere;
+
 	// ui
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -185,6 +191,7 @@ Renderer::~Renderer()
 	}
 
 	// om
+	SafeRelease(mpBlendState);
 	SafeRelease(mpDepthStencilViewGPU);
 	SafeRelease(mpRenderTargetViewGPU);
 
@@ -257,6 +264,13 @@ void Renderer::RenderScene()
 	for (MeshComponent* pMeshComponent : mMeshComponents)
 	{
 		pMeshComponent->Draw(*mpDeviceContext);
+	}
+
+	if (mbDrawDebugSphere)
+	{
+		mpDebugSphere->Draw(*mpDeviceContext);
+
+		mbDrawDebugSphere = false;
 	}
 }
 
@@ -341,6 +355,12 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBasic.hlsl"));
 	ASSERT(bResult);
 
+	bResult = renderer.TryCreateVertexShaderAndInputLayout(SHADER_PATH("VSBoundingSphere.hlsl"), EVertexType::POS_NORMAL_UV);
+	ASSERT(bResult);
+
+	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBoundingSphere.hlsl"));
+	ASSERT(bResult);
+
 	HRESULT hr = S_OK;
 	D3D11_SAMPLER_DESC samplerDescs[static_cast<uint8_t>(ESamplerType::COUNT)] = {
 		{
@@ -387,6 +407,30 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	renderer.mpDeviceContext->VSSetConstantBuffers(0, 2, pConstantBuffers);
 	renderer.mpDeviceContext->PSSetConstantBuffers(0, 2, pConstantBuffers);
 
+	D3D11_BLEND_DESC blendDesc;
+	ZeroMemory(&blendDesc, sizeof(blendDesc));
+
+	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.IndependentBlendEnable = false;
+	blendDesc.RenderTarget[0].BlendEnable = true;
+	blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+	blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	hr = renderer.mpDevice->CreateBlendState(&blendDesc, &renderer.mpBlendState);
+	if (FAILED(hr))
+	{
+		LOG_SYSTEM_ERROR(hr, "CreateBlendState");
+
+		ASSERT(false);
+
+		renderer.mErrorCode = hr;
+	}
+
 	Mesh* const pTriangle = Shape::CreateTriangleAlloc();
 	renderer.mMeshMap.insert({ TEXT("Triangle"), pTriangle });
 
@@ -395,6 +439,8 @@ bool Renderer::TryInitialize(const HWND hWnd)
 
 	Material* const pBasicMaterial = new Material();
 	renderer.mMaterialMap.insert({ TEXT("Basic"), pBasicMaterial });
+
+	renderer.mpDebugSphere = new DebugSphere();
 
 	return true;
 }
@@ -521,25 +567,29 @@ bool Renderer::TryCreateVertexShaderAndInputLayout(const std::wstring& path, con
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, offsetof(Vertex, uv), D3D11_INPUT_PER_VERTEX_DATA, 0}
 		};
 
-		HRESULT hr = mpDevice->CreateInputLayout(
-			layoutDescs,
-			ARRAYSIZE(layoutDescs),
-			pShaderBlob->GetBufferPointer(),
-			pShaderBlob->GetBufferSize(),
-			mInputLayoutMap + static_cast<uint8_t>(type)
-		);
-
-		if (FAILED(hr))
+		HRESULT hr = S_OK;
+		if (mInputLayoutMap[static_cast<uint8_t>(type)] == nullptr)
 		{
-			LOG_SYSTEM_ERROR(hr, "CreateInputLayout");
+			hr = mpDevice->CreateInputLayout(
+				layoutDescs,
+				ARRAYSIZE(layoutDescs),
+				pShaderBlob->GetBufferPointer(),
+				pShaderBlob->GetBufferSize(),
+				mInputLayoutMap + static_cast<uint8_t>(type)
+			);
 
-			ASSERT(false);
+			if (FAILED(hr))
+			{
+				LOG_SYSTEM_ERROR(hr, "CreateInputLayout");
 
-			mErrorCode = hr;
+				ASSERT(false);
 
-			SafeRelease(pShaderBlob);
+				mErrorCode = hr;
 
-			return false;
+				SafeRelease(pShaderBlob);
+
+				return false;
+			}
 		}
 
 		ID3D11VertexShader* pVertexShader = nullptr;
@@ -705,6 +755,11 @@ ID3D11ShaderResourceView* Renderer::GetTextureViewOrNull(const std::wstring& pat
 	return nullptr;
 }
 
+ID3D11BlendState* Renderer::GetBlendState() const
+{
+	return mpBlendState;
+}
+
 bool Renderer::TryCreateBuffer(
 	const EBufferType type,
 	const void* const pData,
@@ -802,6 +857,46 @@ void Renderer::RemoveCameraComponent(CameraComponent* const pCameraComponent)
 	}
 
 #undef VECTOR_ITER
+}
+
+void Renderer::SetDebugSphere(const Vector3 center, const float radius)
+{
+	mpDebugSphere->SetCenter(center);
+	mpDebugSphere->SetScale(radius);
+
+	mbDrawDebugSphere = true;
+}
+
+bool Renderer::TryGetMouseRay(const Vector2 mousePos, Ray& ray) const
+{
+	if (mCameraComponents.empty())
+	{
+		return false;
+	}
+
+	const Vector2 screenSize(static_cast<float>(mWidth), static_cast<float>(mHeight));
+
+	Vector2 ndcXY = 2.f * mousePos / screenSize - Vector2(1.f, 1.f);
+	ndcXY.y *= -1.f;
+
+	const CameraComponent& cameraComponent = *mCameraComponents[mSelectedNumber];
+	const Matrix viewProj = cameraComponent.GetViewProjectionMatrix();
+
+	const Matrix inversedViewProj = viewProj.Invert();
+
+	Vector3 startPos(ndcXY.x, ndcXY.y, 0.f);
+	startPos = Vector3::Transform(startPos, inversedViewProj);
+
+	Vector3 endPos(ndcXY.x, ndcXY.y, 1.f);
+	endPos = Vector3::Transform(endPos, inversedViewProj);
+
+	Vector3 dir = endPos - startPos;
+	dir.Normalize();
+
+	ray.position = startPos;
+	ray.direction = dir;
+
+	return true;
 }
 
 bool Renderer::tryCompileShader(const TCHAR* const path, const EShaderType type, ID3DBlob*& pOutShaderBlob)

@@ -24,6 +24,7 @@ public:
 	Actor& operator=(Actor&&) = delete;
 
 	void Update(const float deltaTime);
+	Matrix GetTransform() const;
 
 	void AddComponent(Component* const pComponent);
 	void RemoveComponent(Component* const pComponent);
@@ -81,4 +82,6 @@ private:
 	std::vector<Component*> mPendingComponents;
 
 	bool mHasComponent[ComponentGenerator::GetComponentCount()];
+
+	BoundingSphere mBoudingSphere;
 };

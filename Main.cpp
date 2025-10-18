@@ -24,9 +24,9 @@ int WINAPI wWinMain(
 		}
 		else
 		{
-			GameCore* const pGameCore = GameCore::GetInstance();
+			GameCore& gameCore = GameCore::GetInstance();
 
-			exitCode = pGameCore->Run();
+			exitCode = gameCore.Run();
 		}
 	}
 	GameCore::Destroy();

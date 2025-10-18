@@ -6,6 +6,7 @@
 
 #include "DebugHelper.h"
 #include "IUIDrawable.h"
+#include "IPickingListener.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
@@ -24,13 +25,16 @@ public:
 
 	int Run();
 
+	void AddPickingListener(IPickingListener* const pListener);
+	void RemovePickingListener(IPickingListener* const pListener);
+
 	static bool TryInitialize(const HINSTANCE hInstance, const int nShowCmd);
 
-	inline static GameCore* GetInstance()
+	inline static GameCore& GetInstance()
 	{
 		ASSERT(spInstance != nullptr, "Please call Initialize first");
 
-		return spInstance;
+		return *spInstance;
 	}
 
 	inline static void Destroy()
@@ -95,6 +99,8 @@ private:
 	std::vector<Actor*> mActors;
 	std::vector<Actor*> mPendingActors;
 	bool mbSuspending;
+
+	std::vector<IPickingListener*> mPickingListeners;
 
 private:
 	GameCore(const HINSTANCE hInstance);

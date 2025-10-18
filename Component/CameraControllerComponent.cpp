@@ -10,14 +10,14 @@ CameraControllerComponent::CameraControllerComponent(Actor* const pOwner)
 	, mSpeed(3.f)
 	, mMoveKeys{ 'W', 'S', 'A', 'D' }
 {
-	GameCore* const pGameCore = GameCore::GetInstance();
+	GameCore& gameCore = GameCore::GetInstance();
 
-	mPrevMousePosition = pGameCore->GetMousePosition();
+	mPrevMousePosition = gameCore.GetMousePosition();
 }
 
 void CameraControllerComponent::Update(const float deltaTime)
 {
-	GameCore* const pGameCore = GameCore::GetInstance();
+	GameCore& gameCore = GameCore::GetInstance();
 	Actor* pOwner = GetOwner();
 
 	Vector3 nextPos = pOwner->GetPosition();
@@ -30,36 +30,36 @@ void CameraControllerComponent::Update(const float deltaTime)
 	Vector3 right = up.Cross(front);
 	right.Normalize();
 
-	if (pGameCore->IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::FRONT)]))
+	if (gameCore.IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::FRONT)]))
 	{
 		nextPos += front * mSpeed * deltaTime;
 	}
 
-	if (pGameCore->IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::BACK)]))
+	if (gameCore.IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::BACK)]))
 	{
 		nextPos -= front * mSpeed * deltaTime;
 	}
 
-	if (pGameCore->IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::LEFT)]))
+	if (gameCore.IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::LEFT)]))
 	{
 		nextPos -= right * mSpeed * deltaTime;
 	}
 
-	if (pGameCore->IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::RIGHT)]))
+	if (gameCore.IsKeyPressed(mMoveKeys[static_cast<uint8_t>(EMoveKey::RIGHT)]))
 	{
 		nextPos += right * mSpeed * deltaTime;
 	}
 
 	pOwner->SetPosition(nextPos);
 
-	const Vector2 mousePosition = pGameCore->GetMousePosition();
-	if (pGameCore->IsKeyPressed(VK_MBUTTON))
+	const Vector2 mousePosition = gameCore.GetMousePosition();
+	if (gameCore.IsKeyPressed(VK_MBUTTON))
 	{
 		const Vector2 delta = mousePosition - mPrevMousePosition;
 
-		Renderer* const pRenderer = Renderer::GetInstance();
+		Renderer& renderer = Renderer::GetInstance();
 
-		const Vector2 screenSize(static_cast<float>(pRenderer->GetWidth()), static_cast<float>(pRenderer->GetHeight()));
+		const Vector2 screenSize(static_cast<float>(renderer.GetWidth()), static_cast<float>(renderer.GetHeight()));
 
 		const Vector2 deltaRadian = delta / screenSize * XM_2PI;
 

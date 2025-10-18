@@ -56,6 +56,20 @@ void Actor::Update(const float deltaTime)
 	mPendingComponents.clear();
 }
 
+Matrix Actor::GetTransform() const
+{
+	const Matrix translation = Matrix::CreateTranslation(mPosition);
+	const Matrix scaleMat = Matrix::CreateScale(mScale);
+
+	const Matrix rotationX = Matrix::CreateRotationX(mRotation.x);
+	const Matrix rotationY = Matrix::CreateRotationY(mRotation.y);
+	const Matrix rotationZ = Matrix::CreateRotationZ(mRotation.z);
+
+	const Matrix transform = scaleMat * rotationX * rotationY * rotationZ * translation;
+
+	return transform;
+}
+
 void Actor::AddComponent(Component* const pComponent)
 {
 	ASSERT(pComponent != nullptr);
@@ -94,9 +108,9 @@ void Actor::DrawUI()
 			if (ImGui::IsItemHovered() &&
 				(ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) || ImGui::IsKeyPressed(ImGuiKey_F2)))
 			{
-				GameCore* const pGameCore = GameCore::GetInstance();
+				GameCore& gameCore = GameCore::GetInstance();
 
-				pGameCore->SuspendUpdates();
+				gameCore.SuspendUpdates();
 
 				mbRenaming = true;
 			}
@@ -111,9 +125,9 @@ void Actor::DrawUI()
 					strcpy(mLabel, mTempBuffer);
 				}
 
-				GameCore* const pGameCore = GameCore::GetInstance();
+				GameCore& gameCore = GameCore::GetInstance();
 
-				pGameCore->ResumeUpdates();
+				gameCore.ResumeUpdates();
 
 				mbRenaming = false;
 			}
@@ -171,9 +185,9 @@ void Actor::DrawUI()
 				}
 				ImGui::EndTable();
 
-				Renderer* const pRenderer = Renderer::GetInstance();
+				Renderer& renderer = Renderer::GetInstance();
 
-				const int width = pRenderer->GetWidth();
+				const int width = renderer.GetWidth();
 
 				ImGui::DragFloat3("Position", reinterpret_cast<float*>(&mPosition), 0.1f, width * -0.5f, width * 0.5f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
 
@@ -193,9 +207,15 @@ void Actor::DrawUI()
 				ImGui::TreePop();
 			}
 
-			for (Component* const pComponent : mComponents)
+			for (int i = 0; i < mComponents.size(); ++i)
 			{
-				pComponent->DrawUI();
+				Component* const pComponent = mComponents[i];
+
+				ImGui::PushID(i);
+				{
+					pComponent->DrawUI();
+				}
+				ImGui::PopID();
 			}
 
 			ImGui::Separator();
