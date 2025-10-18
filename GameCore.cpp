@@ -303,6 +303,12 @@ bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
 	ShowWindow(spInstance->mhWnd, nShowCmd);
 	UpdateWindow(spInstance->mhWnd);
 
+	Actor* const pActor = new Actor("Camera");
+	new CameraComponent(pActor);
+	new CameraControllerComponent(pActor);
+
+	spInstance->mActors.push_back(pActor);
+
 	return SUCCEEDED(spInstance->mErrorCode);
 }
 
@@ -365,6 +371,22 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 
 	case WM_MBUTTONUP:
 		mbKeyPressed[VK_MBUTTON] = false;
+		break;
+
+	case WM_LBUTTONDOWN:
+		mbKeyPressed[VK_LBUTTON] = true;
+		break;
+
+	case WM_LBUTTONUP:
+		mbKeyPressed[VK_LBUTTON] = false;
+		break;
+
+	case WM_RBUTTONDOWN:
+		mbKeyPressed[VK_RBUTTON] = true;
+		break;
+
+	case WM_RBUTTONUP:
+		mbKeyPressed[VK_RBUTTON] = false;
 		break;
 
 	default:

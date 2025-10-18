@@ -133,11 +133,21 @@ public:
 		return mInputLayoutMap[static_cast<uint8_t>(type)];
 	}
 
+	inline ID3D11RasterizerState* GetWireframeState() const
+	{
+		return mpWireframeState;
+	}
+
 	inline ID3D11SamplerState* GetSamplerState(const ESamplerType type) const
 	{
 		ASSERT(static_cast<uint8_t>(type) < static_cast<uint8_t>(ESamplerType::COUNT));
 
 		return mSamplerStateMap[static_cast<uint8_t>(type)];
+	}
+
+	inline ID3D11DepthStencilState* GetDepthStencilState() const
+	{
+		return mpDepthReadOnlyState;
 	}
 
 private:
@@ -165,6 +175,7 @@ private:
 	ID3D11RenderTargetView* mpRenderTargetViewGPU;
 	ID3D11DepthStencilView* mpDepthStencilViewGPU;
 	ID3D11BlendState* mpBlendState;
+	ID3D11DepthStencilState* mpDepthReadOnlyState;
 
 	// resources
 	ID3D11SamplerState* mSamplerStateMap[static_cast<int>(ESamplerType::COUNT)];

@@ -34,7 +34,7 @@ Mesh::Mesh(
 	}
 
 	const Vector3 minToMax = maxVector - minVector;
-	mBoundingSphereLocal.Radius = minToMax.Length();
+	mBoundingSphereLocal.Radius = minToMax.Length() * 0.5f;
 
 	bool bResult = renderer.TryCreateBuffer(
 		EBufferType::VERTEX,
@@ -188,4 +188,60 @@ Mesh* Shape::CreateCubeAlloc()
 	constexpr UINT indexCount = static_cast<UINT>(ARRAYSIZE(indices));
 
 	return new Mesh(vertices, vertexCount, indices, indexCount);
+}
+
+Mesh* Shape::CreateSphereAlloc()
+{
+	constexpr float radius = 1.f;
+	constexpr int32_t sliceCount = 20;
+	constexpr int32_t stackCount = 20;
+
+	std::vector<Vertex> vertices;
+	vertices.reserve((stackCount + 1) * (sliceCount + 1));
+
+	std::vector<int32_t> indices;
+	indices.reserve(vertices.capacity() * 6);
+
+	constexpr float DELTA_THETA = -XM_2PI / sliceCount;
+	constexpr float DELTA_PHI = -XM_PI / stackCount;
+
+	const Vector3 startPoint(0.f, -radius, 0.f);
+	for (int y = 0; y <= stackCount; ++y)
+	{
+		const Matrix rotationZ = Matrix::CreateRotationZ(DELTA_PHI * y);
+		const Vector3 sliceStart = Vector3::Transform(startPoint, rotationZ);
+
+		for (int x = 0; x <= sliceCount; ++x)
+		{
+			const Matrix rotationY = Matrix::CreateRotationY(DELTA_THETA * x);
+
+			const Vector3 currPoint = Vector3::Transform(sliceStart, rotationY);
+
+			const Vertex vertex = { currPoint, { 0.f, 0.f, 0.f }, { 0.f, 0.f } };
+
+			vertices.push_back(vertex);
+		}
+	}
+
+	for (int y = 0; y < stackCount; ++y)
+	{
+		const int start = (sliceCount + 1) * y;
+		for (int x = 0; x < sliceCount; ++x)
+		{
+			indices.push_back(start + x);
+			indices.push_back(start + x + sliceCount + 1);
+			indices.push_back(start + x + 1 + sliceCount + 1);
+
+			indices.push_back(start + x);
+			indices.push_back(start + x + 1 + sliceCount + 1);
+			indices.push_back(start + x + 1);
+		}
+	}
+
+	return new Mesh(
+		vertices.data(),
+		static_cast<UINT>(vertices.size()),
+		indices.data(),
+		static_cast<UINT>(indices.size())
+	);
 }

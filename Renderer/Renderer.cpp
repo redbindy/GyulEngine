@@ -33,6 +33,7 @@ Renderer::Renderer(const HWND hWnd)
 	, mpRenderTargetViewGPU(nullptr)
 	, mpDepthStencilViewGPU(nullptr)
 	, mpBlendState(nullptr)
+	, mpDepthReadOnlyState(nullptr)
 	, mSamplerStateMap{ nullptr, }
 	, mMeshMap()
 	, mMaterialMap()
@@ -191,6 +192,7 @@ Renderer::~Renderer()
 	}
 
 	// om
+	SafeRelease(mpDepthReadOnlyState);
 	SafeRelease(mpBlendState);
 	SafeRelease(mpDepthStencilViewGPU);
 	SafeRelease(mpRenderTargetViewGPU);
@@ -431,11 +433,23 @@ bool Renderer::TryInitialize(const HWND hWnd)
 		renderer.mErrorCode = hr;
 	}
 
+	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
+	ZeroMemory(&depthStencilDesc, sizeof(depthStencilDesc));
+
+	depthStencilDesc.DepthEnable = TRUE;
+	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+	renderer.mpDevice->CreateDepthStencilState(&depthStencilDesc, &renderer.mpDepthReadOnlyState);
+
 	Mesh* const pTriangle = Shape::CreateTriangleAlloc();
 	renderer.mMeshMap.insert({ TEXT("Triangle"), pTriangle });
 
 	Mesh* const pCube = Shape::CreateCubeAlloc();
 	renderer.mMeshMap.insert({ TEXT("Cube"), pCube });
+
+	Mesh* const pSphere = Shape::CreateSphereAlloc();
+	renderer.mMeshMap.insert({ TEXT("Sphere"), pSphere });
 
 	Material* const pBasicMaterial = new Material();
 	renderer.mMaterialMap.insert({ TEXT("Basic"), pBasicMaterial });

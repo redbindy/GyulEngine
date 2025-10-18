@@ -180,7 +180,7 @@
     <ClCompile Include="Component\CameraComponent.cpp" />
     <ClCompile Include="Component\Component.cpp" />
     <ClCompile Include="DebugHelper.cpp" />
-    <ClCompile Include="Renderer\DebugBox.cpp" />
+    <ClCompile Include="Renderer\DebugSphere.cpp" />
     <ClCompile Include="GameCore.cpp" />
     <ClCompile Include="Component\CameraControllerComponent.cpp" />
     <ClCompile Include="Main.cpp" />

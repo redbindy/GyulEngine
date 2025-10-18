@@ -7,11 +7,13 @@
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
 
+class Mesh;
+
 class DebugSphere final
 {
 public:
 	DebugSphere();
-	~DebugSphere();
+	~DebugSphere() = default;
 	DebugSphere(const DebugSphere& other) = delete;
 	DebugSphere& operator=(const DebugSphere& other) = delete;
 	DebugSphere(DebugSphere&& other) = delete;
@@ -33,15 +35,14 @@ private:
 	Vector3 mCenter;
 	float mScale;
 
-	ID3D11Buffer* mpVertexBuffer;
-	ID3D11Buffer* mpIndexBuffer;
-	int mIndexCount;
-
-	ID3D11InputLayout* mpInputLayout;
-	D3D11_PRIMITIVE_TOPOLOGY mPrimitiveTopology;
+	Mesh* mpMesh;
 
 	ID3D11VertexShader* mpVertexShader;
+
+	ID3D11RasterizerState* mpWireframeState;
+
 	ID3D11PixelShader* mpPixelShader;
 
 	ID3D11BlendState* mpBlendState;
+	ID3D11DepthStencilState* mpDepthReadOnlyState;
 };

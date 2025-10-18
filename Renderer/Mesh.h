@@ -51,4 +51,5 @@ namespace Shape
 {
 	Mesh* CreateTriangleAlloc();
 	Mesh* CreateCubeAlloc();
+	Mesh* CreateSphereAlloc();
 };
