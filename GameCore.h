@@ -6,12 +6,12 @@
 
 #include "DebugHelper.h"
 #include "IUIDrawable.h"
-#include "IPickingListener.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
 
 class Actor;
+class InteractionCollider;
 
 class GameCore final : public IUIDrawable
 {
@@ -25,8 +25,8 @@ public:
 
 	int Run();
 
-	void AddPickingListener(IPickingListener* const pListener);
-	void RemovePickingListener(IPickingListener* const pListener);
+	void RegisterInteraction(Actor* const pOwner, const BoundingSphere& boundingSphereLocal);
+	void UnregisterInteraction(const Actor* const pOwner);
 
 	static bool TryInitialize(const HINSTANCE hInstance, const int nShowCmd);
 
@@ -100,7 +100,7 @@ private:
 	std::vector<Actor*> mPendingActors;
 	bool mbSuspending;
 
-	std::vector<IPickingListener*> mPickingListeners;
+	std::vector<InteractionCollider> mInteractionColliders;
 
 private:
 	GameCore(const HINSTANCE hInstance);

@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Component.h"
-#include "IPickingListener.h"
 
 class Mesh;
 class Material;
 
-class MeshComponent final : public Component, public IPickingListener
+class MeshComponent final : public Component
 {
 public:
 	MeshComponent(Actor* const pOwner);
@@ -20,13 +19,7 @@ public:
 	void Draw(ID3D11DeviceContext& deviceContext) const;
 	virtual void DrawUI() override;
 
-	virtual bool CheckCollision(const Ray& ray, float& outDist) override;
-	virtual void OnCollision() override;
-
 private:
 	Mesh* mpMesh;
 	Material* mpMaterial;
-
-private:
-	inline BoundingSphere getBoundingSphereWorld() const;
 };

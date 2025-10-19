@@ -147,6 +147,7 @@
     <ClInclude Include="Component\Component.h" />
     <ClInclude Include="Component\ComponentGenerator.h" />
     <ClInclude Include="DebugHelper.h" />
+    <ClInclude Include="InteractionCollider.h" />
     <ClInclude Include="Renderer\DebugSphere.h" />
     <ClInclude Include="Renderer\ETypeForRenderer.h" />
     <ClInclude Include="GameCore.h" />
@@ -155,7 +156,6 @@
     <ClInclude Include="Renderer\Material.h" />
     <ClInclude Include="Renderer\Mesh.h" />
     <ClInclude Include="Renderer\Renderer.h" />
-    <ClInclude Include="IPickingListener.h" />
     <ClInclude Include="Renderer\Vertex.h" />
     <ClInclude Include="StringHelper.h" />
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h" />
@@ -180,6 +180,7 @@
     <ClCompile Include="Component\CameraComponent.cpp" />
     <ClCompile Include="Component\Component.cpp" />
     <ClCompile Include="DebugHelper.cpp" />
+    <ClCompile Include="InteractionCollider.cpp" />
     <ClCompile Include="Renderer\DebugSphere.cpp" />
     <ClCompile Include="GameCore.cpp" />
     <ClCompile Include="Component\CameraControllerComponent.cpp" />

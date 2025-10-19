@@ -168,7 +168,7 @@
     <ClInclude Include="Renderer\DebugSphere.h">
       <Filter>Renderer\.h</Filter>
     </ClInclude>
-    <ClInclude Include="IPickingListener.h">
+    <ClInclude Include="InteractionCollider.h">
       <Filter>Main\.h</Filter>
     </ClInclude>
   </ItemGroup>
@@ -236,8 +236,11 @@
     <ClCompile Include="Component\CameraComponent.cpp">
       <Filter>Component\.cpp</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer\DebugBox.cpp">
+    <ClCompile Include="Renderer\DebugSphere.cpp">
       <Filter>Renderer\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="InteractionCollider.cpp">
+      <Filter>Main\.cpp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

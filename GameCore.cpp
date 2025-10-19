@@ -7,6 +7,7 @@
 #include "Component/MeshComponent.h"
 #include "Component/CameraComponent.h"
 #include "Component/CameraControllerComponent.h"
+#include "InteractionCollider.h"
 
 enum
 {
@@ -24,13 +25,13 @@ GameCore::GameCore(const HINSTANCE hInstance)
 	, mbKeyPressed{ false, }
 	, mActors()
 	, mPendingActors()
-	, mPickingListeners()
+	, mInteractionColliders()
 {
 	ASSERT(hInstance != nullptr);
 
 	mActors.reserve(DEFAULT_BUFFER_SIZE);
 	mPendingActors.reserve(DEFAULT_BUFFER_SIZE);
-	mPickingListeners.reserve(DEFAULT_BUFFER_SIZE);
+	mInteractionColliders.reserve(DEFAULT_BUFFER_SIZE);
 
 	WNDCLASSEX wc;
 	ZeroMemory(&wc, sizeof(wc));
@@ -168,28 +169,28 @@ int GameCore::Run()
 				}
 			}
 
-			// hovering
+			// interaction
 			Ray ray;
 			if (renderer.TryGetMouseRay(mMousePosition, ray))
 			{
-				IPickingListener* pPickedListener = nullptr;
+				InteractionCollider* pPickedCollider = nullptr;
 				float dist = D3D11_FLOAT32_MAX;
 
-				for (IPickingListener* const pListener : mPickingListeners)
+				for (InteractionCollider& collider : mInteractionColliders)
 				{
 					float collisionDist = D3D11_FLOAT32_MAX;
 
-					if (pListener->CheckCollision(ray, collisionDist) && collisionDist < dist)
+					if (collider.CheckCollision(ray, collisionDist) && collisionDist < dist)
 					{
 						dist = collisionDist;
 
-						pPickedListener = pListener;
+						pPickedCollider = &collider;
 					}
 				}
 
-				if (pPickedListener != nullptr)
+				if (pPickedCollider != nullptr)
 				{
-					pPickedListener->OnCollision();
+					pPickedCollider->OnCollision();
 				}
 			}
 
@@ -252,23 +253,42 @@ int GameCore::Run()
 	return (int)msg.wParam;
 }
 
-void GameCore::AddPickingListener(IPickingListener* const pListener)
+void GameCore::RegisterInteraction(Actor* const pOwner, const BoundingSphere& boundingSphereLocal)
 {
-	ASSERT(pListener != nullptr);
+	ASSERT(pOwner != nullptr);
 
-	mPickingListeners.push_back(pListener);
+	bool bExist = false;
+	for (const InteractionCollider& collider : mInteractionColliders)
+	{
+		if (collider.GetOwner() == pOwner)
+		{
+			bExist = true;
+
+			break;
+		}
+	}
+
+	if (!bExist)
+	{
+		mInteractionColliders.push_back(InteractionCollider(pOwner, boundingSphereLocal));
+	}
 }
 
-void GameCore::RemovePickingListener(IPickingListener* const pListener)
+void GameCore::UnregisterInteraction(const Actor* const pOwner)
 {
-	ASSERT(pListener != nullptr);
+	ASSERT(pOwner != nullptr);
 
-#define VECTOR_ITER std::vector<IPickingListener*>::iterator
+#define VECTOR_ITER std::vector<InteractionCollider>::iterator
 
-	VECTOR_ITER iter = std::find(mPickingListeners.begin(), mPickingListeners.end(), pListener);
-	if (iter != mPickingListeners.end())
+	for (VECTOR_ITER iter = mInteractionColliders.begin(); iter != mInteractionColliders.end(); ++iter)
 	{
-		mPickingListeners.erase(iter);
+		const InteractionCollider& collider = *iter;
+		if (collider.GetOwner() == pOwner)
+		{
+			mInteractionColliders.erase(iter);
+
+			break;
+		}
 	}
 
 #undef VECTOR_ITER

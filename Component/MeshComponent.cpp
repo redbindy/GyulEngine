@@ -24,19 +24,16 @@ MeshComponent::MeshComponent(Actor* const pOwner)
 	renderer.AddMeshComponent(this);
 
 	GameCore& gameCore = GameCore::GetInstance();
-
-	gameCore.AddPickingListener(this);
+	gameCore.RegisterInteraction(pOwner, mpMesh->GetBoundingSphereLocal());
 }
 
 MeshComponent::~MeshComponent()
 {
 	Renderer& renderer = Renderer::GetInstance();
-
 	renderer.RemoveMeshComponent(this);
 
 	GameCore& gameCore = GameCore::GetInstance();
-
-	gameCore.RemovePickingListener(this);
+	gameCore.UnregisterInteraction(GetOwner());
 }
 
 void MeshComponent::Update(const float deltaTime)
@@ -74,34 +71,4 @@ void MeshComponent::DrawUI()
 		ImGui::TreePop();
 	}
 	ImGui::PopID();
-}
-
-bool MeshComponent::CheckCollision(const Ray& ray, float& outDist)
-{
-	const BoundingSphere boundingSphereWorld = getBoundingSphereWorld();
-
-	return ray.Intersects(boundingSphereWorld, outDist);
-}
-
-void MeshComponent::OnCollision()
-{
-	const BoundingSphere boundingSphereWorld = getBoundingSphereWorld();
-
-	Renderer& renderer = Renderer::GetInstance();
-
-	renderer.SetDebugSphere(boundingSphereWorld.Center, boundingSphereWorld.Radius);
-}
-
-inline BoundingSphere MeshComponent::getBoundingSphereWorld() const
-{
-	const BoundingSphere boundingSphereLocal = mpMesh->GetBoundingSphereLocal();
-
-	Actor& actor = *GetOwner();
-
-	const Matrix transform = actor.GetTransform();
-
-	BoundingSphere boundingSphereWorld;
-	boundingSphereLocal.Transform(boundingSphereWorld, transform);
-
-	return boundingSphereWorld;
 }
