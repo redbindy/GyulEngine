@@ -17,7 +17,7 @@ public:
 	InteractionCollider(InteractionCollider&& other) = default;
 	InteractionCollider& operator=(InteractionCollider&& other) = default;
 
-	bool CheckCollision(const Ray& ray, float& outDist) const;
+	bool CheckCollision(const Vector2 mouseCoord, float& outDist);
 	void OnCollision();
 
 	const Actor* GetOwner() const
@@ -29,6 +29,12 @@ private:
 	Actor* mpOwner;
 	BoundingSphere mBoundingSphereLocal;
 
+	Vector3 mMouseStartWorld;
+	Vector3 mMouseEndWorld;
+	Ray mMouseRay;
+	float mCollisionDist;
+
 	bool mbPicked;
-	Vector3 mLastMousePosition;
+	float mPrevRatio;
+	Vector3 mPrevVector;
 };

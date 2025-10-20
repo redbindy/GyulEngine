@@ -12,7 +12,6 @@ CameraComponent::CameraComponent(Actor* const pOwner)
 	, mNearZ(0.1f)
 	, mFarZ(100.f)
 	, mFov(XMConvertToRadians(105.f))
-	, mViewProjMatrix()
 {
 	Renderer& renderer = Renderer::GetInstance();
 
@@ -35,20 +34,12 @@ void CameraComponent::Update(const float deltaTime)
 		return;
 	}
 
-	CBFrame buffer;
-	Actor* const pOwner = GetOwner();
+	Actor& owner = *GetOwner();
 
-	const Vector3 position = pOwner->GetPosition();
+	const Vector3 position = owner.GetPosition();
 
-	const Vector3 rotation = pOwner->GetRotation();
-
-	const Matrix yawPitch = Matrix::CreateFromYawPitchRoll({ rotation.x, rotation.y, 0.f });
-
-	Vector3 front(0.f, 0.f, 1.f);
-	Vector3 up(0.f, 1.f, 0.f);
-
-	front = Vector3::Transform(front, yawPitch);
-	up = Vector3::Transform(up, yawPitch);
+	const Vector3 front = Vector3::Transform(Vector3::UnitZ, owner.GetRotation());
+	const Vector3 up = Vector3::Transform(Vector3::UnitY, owner.GetRotation());
 
 	const Matrix view = XMMatrixLookToLH(position, front, up);
 
@@ -69,11 +60,9 @@ void CameraComponent::Update(const float deltaTime)
 		proj = XMMatrixPerspectiveFovLH(mFov, aspectRatio, mNearZ, mFarZ);
 	}
 
-	mViewProjMatrix = view * proj;
+	const Matrix viewProj = view * proj;
 
-	buffer.viewProj = mViewProjMatrix.Transpose();
-
-	renderer.UpdateCBFrame(buffer);
+	renderer.UpdateCBFrame(position, viewProj);
 
 	mbActive = false;
 }
@@ -123,9 +112,3 @@ void CameraComponent::DrawUI()
 	}
 	ImGui::PopID();
 }
-
-Matrix CameraComponent::GetViewProjectionMatrix() const
-{
-	return mViewProjMatrix;
-}
-

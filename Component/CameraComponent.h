@@ -19,8 +19,6 @@ public:
 	virtual void Update(const float deltaTime) override;
 	virtual void DrawUI() override;
 
-	Matrix GetViewProjectionMatrix() const;
-
 	inline void SetActive()
 	{
 		mbActive = true;
@@ -40,7 +38,4 @@ private:
 
 	// only perspective
 	float mFov;
-
-	// viewProj
-	Matrix mViewProjMatrix;
 };

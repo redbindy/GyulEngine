@@ -170,28 +170,24 @@ int GameCore::Run()
 			}
 
 			// interaction
-			Ray ray;
-			if (renderer.TryGetMouseRay(mMousePosition, ray))
+			InteractionCollider* pPickedCollider = nullptr;
+			float dist = D3D11_FLOAT32_MAX;
+
+			for (InteractionCollider& collider : mInteractionColliders)
 			{
-				InteractionCollider* pPickedCollider = nullptr;
-				float dist = D3D11_FLOAT32_MAX;
+				float collisionDist = D3D11_FLOAT32_MAX;
 
-				for (InteractionCollider& collider : mInteractionColliders)
+				if (collider.CheckCollision(mMousePosition, collisionDist) && collisionDist < dist)
 				{
-					float collisionDist = D3D11_FLOAT32_MAX;
+					dist = collisionDist;
 
-					if (collider.CheckCollision(ray, collisionDist) && collisionDist < dist)
-					{
-						dist = collisionDist;
-
-						pPickedCollider = &collider;
-					}
+					pPickedCollider = &collider;
 				}
+			}
 
-				if (pPickedCollider != nullptr)
-				{
-					pPickedCollider->OnCollision();
-				}
+			if (pPickedCollider != nullptr)
+			{
+				pPickedCollider->OnCollision();
 			}
 
 			// render

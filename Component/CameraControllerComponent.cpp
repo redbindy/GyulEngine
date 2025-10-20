@@ -18,15 +18,12 @@ CameraControllerComponent::CameraControllerComponent(Actor* const pOwner)
 void CameraControllerComponent::Update(const float deltaTime)
 {
 	GameCore& gameCore = GameCore::GetInstance();
-	Actor* pOwner = GetOwner();
+	Actor& owner = *GetOwner();
 
-	Vector3 nextPos = pOwner->GetPosition();
+	Vector3 nextPos = owner.GetPosition();
 
-	const Vector3 rotation = pOwner->GetRotation();
-	const Matrix yawPitch = Matrix::CreateFromYawPitchRoll({ rotation.x, rotation.y, 0.f });
-
-	const Vector3 front = Vector3::Transform({ 0.f, 0.f, 1.f }, yawPitch);
-	const Vector3 up = Vector3::Transform({ 0.f, 1.f, 0.f }, yawPitch);
+	const Vector3 front = Vector3::Transform(Vector3::UnitZ, owner.GetRotation());
+	const Vector3 up = Vector3::Transform(Vector3::UnitY, owner.GetRotation());
 	Vector3 right = up.Cross(front);
 	right.Normalize();
 
@@ -50,7 +47,7 @@ void CameraControllerComponent::Update(const float deltaTime)
 		nextPos += right * mSpeed * deltaTime;
 	}
 
-	pOwner->SetPosition(nextPos);
+	owner.SetPosition(nextPos);
 
 	const Vector2 mousePosition = gameCore.GetMousePosition();
 	if (gameCore.IsKeyPressed(VK_MBUTTON))
@@ -64,9 +61,17 @@ void CameraControllerComponent::Update(const float deltaTime)
 		const Vector2 deltaRadian = delta / screenSize * XM_2PI;
 
 		// y = yaw, x = pitch
-		const Vector3 deltaRotation(deltaRadian.y, deltaRadian.x, 0.f);
+		const Quaternion yaw = Quaternion::CreateFromAxisAngle(up, deltaRadian.y);
+		const Vector3 newRight = Vector3::Transform(right, yaw);
 
-		pOwner->SetRotation(rotation + deltaRotation);
+		const Quaternion pitch = Quaternion::CreateFromAxisAngle(newRight, deltaRadian.x);
+
+		const Quaternion yawPitch = Quaternion::Concatenate(pitch, yaw);
+
+		Quaternion resultRotation = Quaternion::Concatenate(yawPitch, owner.GetRotation());
+		resultRotation.Normalize();
+
+		owner.SetRotation(resultRotation);
 	}
 	mPrevMousePosition = mousePosition;
 }

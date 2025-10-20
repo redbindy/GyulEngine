@@ -51,7 +51,7 @@ public:
 		return mScale;
 	}
 
-	inline Vector3 GetRotation() const
+	inline Quaternion GetRotation() const
 	{
 		return mRotation;
 	}
@@ -61,7 +61,7 @@ public:
 		mPosition = pos;
 	}
 
-	inline void SetRotation(const Vector3& rotation)
+	inline void SetRotation(const Quaternion& rotation)
 	{
 		mRotation = rotation;
 	}
@@ -75,7 +75,7 @@ private:
 	// transform
 	Vector3 mPosition;
 	Vector3 mScale;
-	Vector3 mRotation;
+	Quaternion mRotation;
 
 	// component
 	std::vector<Component*> mComponents;

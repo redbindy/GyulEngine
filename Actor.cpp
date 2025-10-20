@@ -15,7 +15,7 @@ Actor::Actor(const char* const label)
 	, mbAlive(true)
 	, mPosition(0.f, 0.f, 0.f)
 	, mScale(1.f, 1.f, 1.f)
-	, mRotation(0.f, 0.f, 0.f)
+	, mRotation(Quaternion::Identity)
 	, mComponents()
 {
 	ASSERT(label != nullptr);
@@ -60,12 +60,9 @@ Matrix Actor::GetTransform() const
 {
 	const Matrix translation = Matrix::CreateTranslation(mPosition);
 	const Matrix scaleMat = Matrix::CreateScale(mScale);
+	const Matrix rotationMat = Matrix::CreateFromQuaternion(mRotation);
 
-	const Matrix rotationX = Matrix::CreateRotationX(mRotation.x);
-	const Matrix rotationY = Matrix::CreateRotationY(mRotation.y);
-	const Matrix rotationZ = Matrix::CreateRotationZ(mRotation.z);
-
-	const Matrix transform = scaleMat * rotationX * rotationY * rotationZ * translation;
+	const Matrix transform = scaleMat * rotationMat * translation;
 
 	return transform;
 }
@@ -196,13 +193,11 @@ void Actor::DrawUI()
 				constexpr float DEGREE_TO_RADIAN_COFF = XM_PI / 180.f;
 				constexpr float RADIAN_TO_DEGREE_COFF = 180.f / XM_PI;
 
-				mRotation *= RADIAN_TO_DEGREE_COFF;
-				{
-					const float MAX_DEGREE = 360.f;
+				const float MAX_DEGREE = 360.f;
 
-					ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&mRotation), 0.1f, -MAX_DEGREE, MAX_DEGREE, "%.1f", ImGuiSliderFlags_WrapAround);
-				}
-				mRotation *= DEGREE_TO_RADIAN_COFF;
+				Vector3 rotation = mRotation.ToEuler() * RADIAN_TO_DEGREE_COFF;
+				ImGui::DragFloat3("Rotation", reinterpret_cast<float*>(&rotation), 0.1f, -MAX_DEGREE, MAX_DEGREE, "%.1f", ImGuiSliderFlags_WrapAround);
+				mRotation = Quaternion::CreateFromYawPitchRoll(rotation * DEGREE_TO_RADIAN_COFF);
 
 				ImGui::TreePop();
 			}

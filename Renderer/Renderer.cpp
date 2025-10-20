@@ -38,9 +38,8 @@ Renderer::Renderer(const HWND hWnd)
 	, mMeshMap()
 	, mMaterialMap()
 	, mTextureViewMap()
-	, mCBFrame{}
+	, mCBFrame{ Vector3(0.f, 0.f, 0.f), 0.f, Matrix::Identity }
 	, mpCBFrameGPU(nullptr)
-	, mCBWorldMatrix{}
 	, mpCBWorldMatrixGPU(nullptr)
 	, mErrorCode(S_OK)
 	, mWidth(0)
@@ -223,11 +222,18 @@ Renderer::~Renderer()
 	SafeRelease(mpDevice);
 }
 
-void Renderer::UpdateCBFrame(const CBFrame& buffer)
+void Renderer::UpdateCBFrame(const Vector3 cameraPos, const Matrix viewProj)
 {
 	ASSERT(mpDeviceContext != nullptr);
 
-	mpDeviceContext->UpdateSubresource(mpCBFrameGPU, 0, nullptr, &buffer, 0, 0);
+	mCBFrame.cameraPos = cameraPos;
+	mCBFrame.viewProj = viewProj;
+
+	CBFrame uploadingBuffer;
+	uploadingBuffer.cameraPos = cameraPos;
+	uploadingBuffer.viewProj = viewProj.Transpose();
+
+	mpDeviceContext->UpdateSubresource(mpCBFrameGPU, 0, nullptr, &uploadingBuffer, 0, 0);
 }
 
 void Renderer::UpdateCBWorldMatrix(const CBWorldMatrix& buffer)
@@ -399,7 +405,8 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBFrame, sizeof(CBFrame), 0, renderer.mpCBFrameGPU);
 	ASSERT(bResult);
 
-	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBWorldMatrix, sizeof(CBWorldMatrix), 0, renderer.mpCBWorldMatrixGPU);
+	const CBWorldMatrix cbWorldMatrix = { Matrix::Identity };
+	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &cbWorldMatrix, sizeof(CBWorldMatrix), 0, renderer.mpCBWorldMatrixGPU);
 	ASSERT(bResult);
 
 	ID3D11Buffer* pConstantBuffers[2] = {
@@ -881,36 +888,11 @@ void Renderer::SetDebugSphere(const Vector3 center, const float radius)
 	mbDrawDebugSphere = true;
 }
 
-bool Renderer::TryGetMouseRay(const Vector2 mousePos, Ray& ray) const
+Vector3 Renderer::Unproject(const Vector3 v) const
 {
-	if (mCameraComponents.empty())
-	{
-		return false;
-	}
+	const Matrix inversedViewProj = mCBFrame.viewProj.Invert();
 
-	const Vector2 screenSize(static_cast<float>(mWidth), static_cast<float>(mHeight));
-
-	Vector2 ndcXY = 2.f * mousePos / screenSize - Vector2(1.f, 1.f);
-	ndcXY.y *= -1.f;
-
-	const CameraComponent& cameraComponent = *mCameraComponents[mSelectedNumber];
-	const Matrix viewProj = cameraComponent.GetViewProjectionMatrix();
-
-	const Matrix inversedViewProj = viewProj.Invert();
-
-	Vector3 startPos(ndcXY.x, ndcXY.y, 0.f);
-	startPos = Vector3::Transform(startPos, inversedViewProj);
-
-	Vector3 endPos(ndcXY.x, ndcXY.y, 1.f);
-	endPos = Vector3::Transform(endPos, inversedViewProj);
-
-	Vector3 dir = endPos - startPos;
-	dir.Normalize();
-
-	ray.position = startPos;
-	ray.direction = dir;
-
-	return true;
+	return Vector3::Transform(v, inversedViewProj);
 }
 
 bool Renderer::tryCompileShader(const TCHAR* const path, const EShaderType type, ID3DBlob*& pOutShaderBlob)

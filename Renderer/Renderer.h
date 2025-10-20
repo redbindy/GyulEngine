@@ -44,7 +44,7 @@ public:
 	Renderer(Renderer&& other) = delete;
 	Renderer& operator=(Renderer&& other) = delete;
 
-	void UpdateCBFrame(const CBFrame& buffer);
+	void UpdateCBFrame(const Vector3 cameraPos, const Matrix viewProj);
 	void UpdateCBWorldMatrix(const CBWorldMatrix& buffer);
 
 	void BeginFrame();
@@ -85,7 +85,7 @@ public:
 
 	void SetDebugSphere(const Vector3 center, const float radius);
 
-	bool TryGetMouseRay(const Vector2 mousePos, Ray& ray) const;
+	Vector3 Unproject(const Vector3 v) const;
 
 	static bool TryInitialize(const HWND hWnd);
 
@@ -187,7 +187,6 @@ private:
 	CBFrame mCBFrame;
 	ID3D11Buffer* mpCBFrameGPU;
 
-	CBWorldMatrix mCBWorldMatrix;
 	ID3D11Buffer* mpCBWorldMatrixGPU;
 
 	// properties
