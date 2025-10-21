@@ -22,8 +22,14 @@ void CameraControllerComponent::Update(const float deltaTime)
 
 	Vector3 nextPos = owner.GetPosition();
 
-	const Vector3 front = Vector3::Transform(Vector3::UnitZ, owner.GetRotation());
-	const Vector3 up = Vector3::Transform(Vector3::UnitY, owner.GetRotation());
+	const Quaternion ownerRotation = owner.GetRotation();
+	const Vector3 eulerRotation = ownerRotation.ToEuler();
+
+	const Quaternion yawPitch = Quaternion::CreateFromYawPitchRoll(eulerRotation.y, eulerRotation.x, 0.f);
+
+	const Vector3 front = Vector3::Transform(Vector3::UnitZ, yawPitch);
+	const Vector3 up = Vector3::Transform(Vector3::UnitY, yawPitch);
+
 	Vector3 right = up.Cross(front);
 	right.Normalize();
 
@@ -58,18 +64,18 @@ void CameraControllerComponent::Update(const float deltaTime)
 
 		const Vector2 screenSize(static_cast<float>(renderer.GetWidth()), static_cast<float>(renderer.GetHeight()));
 
+		// dx - yaw, dy - pitch
 		const Vector2 deltaRadian = delta / screenSize * XM_2PI;
 
-		// y = yaw, x = pitch
-		const Quaternion yaw = Quaternion::CreateFromAxisAngle(up, deltaRadian.y);
-		const Vector3 newRight = Vector3::Transform(right, yaw);
+		Vector3 resultEuler = eulerRotation + Vector3(deltaRadian.y, deltaRadian.x, 0.f);
 
-		const Quaternion pitch = Quaternion::CreateFromAxisAngle(newRight, deltaRadian.x);
+		constexpr float MAX_YAW = XMConvertToRadians(89.f);
+		constexpr float MAX_PITCH = XMConvertToRadians(89.f);
+		constexpr Vector3 MAX_VECTOR = Vector3(MAX_PITCH, MAX_YAW, 0.f);
 
-		const Quaternion yawPitch = Quaternion::Concatenate(pitch, yaw);
+		resultEuler = XMVectorClamp(resultEuler, -MAX_VECTOR, MAX_VECTOR);
 
-		Quaternion resultRotation = Quaternion::Concatenate(yawPitch, owner.GetRotation());
-		resultRotation.Normalize();
+		const Quaternion resultRotation = Quaternion::CreateFromYawPitchRoll(resultEuler);
 
 		owner.SetRotation(resultRotation);
 	}
