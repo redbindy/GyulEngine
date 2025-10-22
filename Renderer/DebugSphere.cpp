@@ -20,7 +20,7 @@ DebugSphere::DebugSphere()
 
 	Renderer& renderer = Renderer::GetInstance();
 
-	mpMesh = renderer.GetMeshOrNull(TEXT("Sphere"));
+	mpMesh = renderer.GetMeshOrNull("Sphere");
 	ASSERT(mpMesh != nullptr);
 
 	mpVertexShader = renderer.GetVertexShaderOrNull(SHADER_PATH("VSBoundingSphere.hlsl"));

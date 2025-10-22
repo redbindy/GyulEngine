@@ -6,6 +6,7 @@
 #include "Renderer/Mesh.h"
 #include "Renderer/Material.h"
 #include "Actor.h"
+#include "StringHelper.h"
 
 MeshComponent::MeshComponent(Actor* const pOwner)
 	: Component(pOwner, "MeshComponent")
@@ -14,11 +15,11 @@ MeshComponent::MeshComponent(Actor* const pOwner)
 {
 	Renderer& renderer = Renderer::GetInstance();
 
-	// mpMesh = renderer->GetMeshOrNull(TEXT("Triangle"));
-	mpMesh = renderer.GetMeshOrNull(TEXT("Cube"));
+	// mpMesh = renderer->GetMeshOrNull("Triangle");
+	mpMesh = renderer.GetMeshOrNull("Cube");
 	ASSERT(mpMesh != nullptr);
 
-	mpMaterial = renderer.GetMaterialOrNull(TEXT("Basic"));
+	mpMaterial = renderer.GetMaterialOrNull("Basic");
 	ASSERT(mpMaterial != nullptr);
 
 	renderer.AddMeshComponent(this);
@@ -65,6 +66,8 @@ void MeshComponent::DrawUI()
 	ImGui::PushID(label);
 	if (ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		Renderer& renderer = Renderer::GetInstance();
+
 		mpMesh->DrawUI();
 		mpMaterial->DrawUI();
 

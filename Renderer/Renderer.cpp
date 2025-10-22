@@ -12,6 +12,7 @@
 #include "Component/CameraComponent.h"
 #include "Actor.h"
 #include "DebugSphere.h"
+#include "StringHelper.h"
 
 enum
 {
@@ -141,6 +142,7 @@ Renderer::Renderer(const HWND hWnd)
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\malgun.ttf", 18.f, nullptr, io.Fonts->GetGlyphRangesKorean());
 
 	if (!ImGui_ImplWin32_Init(hWnd))
 	{
@@ -170,17 +172,17 @@ Renderer::~Renderer()
 	SafeRelease(mpCBWorldMatrixGPU);
 	SafeRelease(mpCBFrameGPU);
 
-	for (std::pair<const std::wstring, ID3D11ShaderResourceView*>& pair : mTextureViewMap)
+	for (std::pair<const std::string, ID3D11ShaderResourceView*>& pair : mTextureViewMap)
 	{
 		SafeRelease(pair.second);
 	}
 
-	for (std::pair<const std::wstring, Material*>& pair : mMaterialMap)
+	for (std::pair<const std::string, Material*>& pair : mMaterialMap)
 	{
 		delete pair.second;
 	}
 
-	for (std::pair<const std::wstring, Mesh*>& pair : mMeshMap)
+	for (std::pair<const std::string, Mesh*>& pair : mMeshMap)
 	{
 		delete pair.second;
 	}
@@ -197,7 +199,7 @@ Renderer::~Renderer()
 	SafeRelease(mpRenderTargetViewGPU);
 
 	// ps
-	for (std::pair<const std::wstring, ID3D11PixelShader*>& pair : mPixelShaderMap)
+	for (std::pair<const std::string, ID3D11PixelShader*>& pair : mPixelShaderMap)
 	{
 		SafeRelease(pair.second);
 	}
@@ -206,7 +208,7 @@ Renderer::~Renderer()
 	SafeRelease(mpWireframeState);
 
 	// vs
-	for (std::pair<const std::wstring, ID3D11VertexShader*>& pair : mVertexShaderMap)
+	for (std::pair<const std::string, ID3D11VertexShader*>& pair : mVertexShaderMap)
 	{
 		SafeRelease(pair.second);
 	}
@@ -450,16 +452,16 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	renderer.mpDevice->CreateDepthStencilState(&depthStencilDesc, &renderer.mpDepthReadOnlyState);
 
 	Mesh* const pTriangle = Shape::CreateTriangleAlloc();
-	renderer.mMeshMap.insert({ TEXT("Triangle"), pTriangle });
+	renderer.mMeshMap.insert({ "Triangle", pTriangle });
 
 	Mesh* const pCube = Shape::CreateCubeAlloc();
-	renderer.mMeshMap.insert({ TEXT("Cube"), pCube });
+	renderer.mMeshMap.insert({ "Cube", pCube });
 
 	Mesh* const pSphere = Shape::CreateSphereAlloc();
-	renderer.mMeshMap.insert({ TEXT("Sphere"), pSphere });
+	renderer.mMeshMap.insert({ "Sphere", pSphere });
 
 	Material* const pBasicMaterial = new Material();
-	renderer.mMaterialMap.insert({ TEXT("Basic"), pBasicMaterial });
+	renderer.mMaterialMap.insert({ "Basic", pBasicMaterial });
 
 	renderer.mpDebugSphere = new DebugSphere();
 
@@ -573,11 +575,14 @@ void Renderer::SwitchWireframeMode()
 	mbWireframe = !mbWireframe;
 }
 
-bool Renderer::TryCreateVertexShaderAndInputLayout(const std::wstring& path, const EVertexType type)
+bool Renderer::TryCreateVertexShaderAndInputLayout(const std::string& path, const EVertexType type)
 {
 	ID3DBlob* pShaderBlob = nullptr;
 	{
-		if (!tryCompileShader(path.c_str(), EShaderType::VERTEX, pShaderBlob))
+		TCHAR pathWideStr[MAX_PATH + 1];
+		ConvertMultiToWide(pathWideStr, path.c_str());
+
+		if (!tryCompileShader(pathWideStr, EShaderType::VERTEX, pShaderBlob))
 		{
 			return false;
 		}
@@ -642,11 +647,14 @@ bool Renderer::TryCreateVertexShaderAndInputLayout(const std::wstring& path, con
 	return true;
 }
 
-bool Renderer::TryCreatePixelShader(const std::wstring& path)
+bool Renderer::TryCreatePixelShader(const std::string& path)
 {
 	ID3DBlob* pShaderBlob = nullptr;
 	{
-		if (!tryCompileShader(path.c_str(), EShaderType::PIXEL, pShaderBlob))
+		TCHAR pathWideStr[MAX_PATH + 1];
+		ConvertMultiToWide(pathWideStr, path.c_str());
+
+		if (!tryCompileShader(pathWideStr, EShaderType::PIXEL, pShaderBlob))
 		{
 			return false;
 		}
@@ -677,11 +685,14 @@ bool Renderer::TryCreatePixelShader(const std::wstring& path)
 	return true;
 }
 
-bool Renderer::TryCreateTextureView(const std::wstring& path)
+bool Renderer::TryCreateTextureView(const std::string& path)
 {
 	ID3D11ShaderResourceView* pTextureView = nullptr;
 
-	const HRESULT hr = CreateDDSTextureFromFile(mpDevice, path.c_str(), nullptr, &pTextureView);
+	TCHAR pathWideStr[MAX_PATH + 1];
+	ConvertMultiToWide(pathWideStr, path.c_str());
+
+	const HRESULT hr = CreateDDSTextureFromFile(mpDevice, pathWideStr, nullptr, &pTextureView);
 	if (FAILED(hr))
 	{
 		LOG_SYSTEM_ERROR(hr, "CreateDDSTextureFromFile");
@@ -698,9 +709,9 @@ bool Renderer::TryCreateTextureView(const std::wstring& path)
 	return true;
 }
 
-ID3D11VertexShader* Renderer::GetVertexShaderOrNull(const std::wstring& path) const
+ID3D11VertexShader* Renderer::GetVertexShaderOrNull(const std::string& path) const
 {
-#define MAP_ITER std::unordered_map<std::wstring, ID3D11VertexShader*>::const_iterator
+#define MAP_ITER std::unordered_map<std::string, ID3D11VertexShader*>::const_iterator
 
 	const MAP_ITER iter = mVertexShaderMap.find(path);
 
@@ -714,9 +725,9 @@ ID3D11VertexShader* Renderer::GetVertexShaderOrNull(const std::wstring& path) co
 	return nullptr;
 }
 
-ID3D11PixelShader* Renderer::GetPixelShaderOrNull(const std::wstring& path) const
+ID3D11PixelShader* Renderer::GetPixelShaderOrNull(const std::string& path) const
 {
-#define MAP_ITER std::unordered_map<std::wstring, ID3D11PixelShader*>::const_iterator
+#define MAP_ITER std::unordered_map<std::string, ID3D11PixelShader*>::const_iterator
 
 	const MAP_ITER iter = mPixelShaderMap.find(path);
 
@@ -730,9 +741,9 @@ ID3D11PixelShader* Renderer::GetPixelShaderOrNull(const std::wstring& path) cons
 	return nullptr;
 }
 
-Mesh* Renderer::GetMeshOrNull(const std::wstring& path) const
+Mesh* Renderer::GetMeshOrNull(const std::string& path) const
 {
-#define MAP_ITER std::unordered_map<std::wstring, Mesh*>::const_iterator
+#define MAP_ITER std::unordered_map<std::string, Mesh*>::const_iterator
 
 	const MAP_ITER iter = mMeshMap.find(path);
 	if (iter != mMeshMap.cend())
@@ -745,9 +756,9 @@ Mesh* Renderer::GetMeshOrNull(const std::wstring& path) const
 	return nullptr;
 }
 
-Material* Renderer::GetMaterialOrNull(const std::wstring& path) const
+Material* Renderer::GetMaterialOrNull(const std::string& path) const
 {
-#define MAP_ITER std::unordered_map<std::wstring, Material*>::const_iterator
+#define MAP_ITER std::unordered_map<std::string, Material*>::const_iterator
 
 	const MAP_ITER iter = mMaterialMap.find(path);
 	if (iter != mMaterialMap.cend())
@@ -760,9 +771,9 @@ Material* Renderer::GetMaterialOrNull(const std::wstring& path) const
 	return nullptr;
 }
 
-ID3D11ShaderResourceView* Renderer::GetTextureViewOrNull(const std::wstring& path) const
+ID3D11ShaderResourceView* Renderer::GetTextureViewOrNull(const std::string& path) const
 {
-#define MAP_ITER std::unordered_map<std::wstring, ID3D11ShaderResourceView*>::const_iterator
+#define MAP_ITER std::unordered_map<std::string, ID3D11ShaderResourceView*>::const_iterator
 
 	const MAP_ITER iter = mTextureViewMap.find(path);
 

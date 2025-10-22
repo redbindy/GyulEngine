@@ -115,7 +115,8 @@ void Actor::DrawUI()
 		else
 		{
 			ImGui::SetKeyboardFocusHere();
-			if (ImGui::InputText("##rename", mTempBuffer, MAX_LABEL_LENGTH, ImGuiInputTextFlags_EnterReturnsTrue))
+			if (ImGui::InputText("##rename", mTempBuffer, MAX_LABEL_LENGTH, ImGuiInputTextFlags_EnterReturnsTrue)
+				|| ImGui::IsItemDeactivatedAfterEdit())
 			{
 				if (strlen(mTempBuffer) != 0)
 				{

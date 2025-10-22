@@ -57,16 +57,16 @@ public:
 	void OnResize(const int width, const int height);
 	void SwitchWireframeMode();
 
-	bool TryCreateVertexShaderAndInputLayout(const std::wstring& path, const EVertexType type);
-	bool TryCreatePixelShader(const std::wstring& path);
-	bool TryCreateTextureView(const std::wstring& path);
+	bool TryCreateVertexShaderAndInputLayout(const std::string& path, const EVertexType type);
+	bool TryCreatePixelShader(const std::string& path);
+	bool TryCreateTextureView(const std::string& path);
 
-	ID3D11VertexShader* GetVertexShaderOrNull(const std::wstring& path) const;
-	ID3D11PixelShader* GetPixelShaderOrNull(const std::wstring& path) const;
+	ID3D11VertexShader* GetVertexShaderOrNull(const std::string& path) const;
+	ID3D11PixelShader* GetPixelShaderOrNull(const std::string& path) const;
 
-	Mesh* GetMeshOrNull(const std::wstring& path) const;
-	Material* GetMaterialOrNull(const std::wstring& path) const;
-	ID3D11ShaderResourceView* GetTextureViewOrNull(const std::wstring& path) const;
+	Mesh* GetMeshOrNull(const std::string& path) const;
+	Material* GetMaterialOrNull(const std::string& path) const;
+	ID3D11ShaderResourceView* GetTextureViewOrNull(const std::string& path) const;
 	ID3D11BlendState* GetBlendState() const;
 
 	bool TryCreateBuffer(
@@ -150,6 +150,11 @@ public:
 		return mpDepthReadOnlyState;
 	}
 
+	inline const std::unordered_map<std::string, Mesh*>& GetMeshMap() const
+	{
+		return mMeshMap;
+	}
+
 private:
 	static Renderer* spInstance;
 
@@ -161,7 +166,7 @@ private:
 	ID3D11InputLayout* mInputLayoutMap[static_cast<int>(EVertexType::COUNT)];
 
 	// vs
-	std::unordered_map<std::wstring, ID3D11VertexShader*> mVertexShaderMap;
+	std::unordered_map<std::string, ID3D11VertexShader*> mVertexShaderMap;
 
 	// rs
 	D3D11_VIEWPORT mViewport;
@@ -169,7 +174,7 @@ private:
 	bool mbWireframe;
 
 	// ps
-	std::unordered_map<std::wstring, ID3D11PixelShader*> mPixelShaderMap;
+	std::unordered_map<std::string, ID3D11PixelShader*> mPixelShaderMap;
 
 	// om
 	ID3D11RenderTargetView* mpRenderTargetViewGPU;
@@ -180,9 +185,9 @@ private:
 	// resources
 	ID3D11SamplerState* mSamplerStateMap[static_cast<int>(ESamplerType::COUNT)];
 
-	std::unordered_map<std::wstring, Mesh*> mMeshMap;
-	std::unordered_map<std::wstring, Material*> mMaterialMap;
-	std::unordered_map<std::wstring, ID3D11ShaderResourceView*> mTextureViewMap;
+	std::unordered_map<std::string, Mesh*> mMeshMap;
+	std::unordered_map<std::string, Material*> mMaterialMap;
+	std::unordered_map<std::string, ID3D11ShaderResourceView*> mTextureViewMap;
 
 	CBFrame mCBFrame;
 	ID3D11Buffer* mpCBFrameGPU;

@@ -30,3 +30,23 @@ inline void ConvertWideToMulti(char buffer[], const TCHAR* const pWide)
 
 	ConvertWideToMulti(buffer, pWide, length);
 }
+
+inline void ConvertMultiToWide(TCHAR buffer[], const char* const pMulti, const int multiLength)
+{
+	ASSERT(buffer != nullptr);
+	ASSERT(pMulti != nullptr);
+	ASSERT(multiLength > 0);
+
+	MultiByteToWideChar(CP_ACP, 0, pMulti, -1, buffer, multiLength);
+	buffer[multiLength] = '\0';
+}
+
+inline void ConvertMultiToWide(TCHAR buffer[], const char* const pMulti)
+{
+	ASSERT(buffer != nullptr);
+	ASSERT(pMulti != nullptr);
+
+	const int multiLength = static_cast<int>(strlen(pMulti));
+
+	ConvertMultiToWide(buffer, pMulti, multiLength);
+}

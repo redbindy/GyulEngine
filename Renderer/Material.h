@@ -22,15 +22,15 @@ public:
 	virtual void DrawUI() override;
 
 private:
-	std::wstring mTexturePath;
+	std::string mTexturePath;
 	ID3D11ShaderResourceView* mpTextureViewGPU;
 
 	ESamplerType mSamplerType;
 	ID3D11SamplerState* mpSamplerState;
 
-	std::wstring mVertexShaderPath;
+	std::string mVertexShaderPath;
 	ID3D11VertexShader* mpVertexShader;
 
-	std::wstring mPixelShaderPath;
+	std::string mPixelShaderPath;
 	ID3D11PixelShader* mpPixelShader;
 };

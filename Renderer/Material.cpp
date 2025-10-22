@@ -21,16 +21,16 @@ Material::Material()
 {
 	Renderer& renderer = Renderer::GetInstance();
 
-	mpTextureViewGPU = renderer.GetTextureViewOrNull(mTexturePath.c_str());
+	mpTextureViewGPU = renderer.GetTextureViewOrNull(mTexturePath);
 	ASSERT(mpTextureViewGPU != nullptr);
 
 	mpSamplerState = renderer.GetSamplerState(mSamplerType);
 	ASSERT(mpSamplerState != nullptr);
 
-	mpVertexShader = renderer.GetVertexShaderOrNull(mVertexShaderPath.c_str());
+	mpVertexShader = renderer.GetVertexShaderOrNull(mVertexShaderPath);
 	ASSERT(mpVertexShader != nullptr);
 
-	mpPixelShader = renderer.GetPixelShaderOrNull(mPixelShaderPath.c_str());
+	mpPixelShader = renderer.GetPixelShaderOrNull(mPixelShaderPath);
 	ASSERT(mpPixelShader != nullptr);
 }
 
@@ -46,18 +46,13 @@ void Material::DrawUI()
 {
 	if (ImGui::TreeNodeEx("Material", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		char buffer[DEFAULT_BUFFER_SIZE];
-		ConvertWideToMulti(buffer, mTexturePath.c_str());
-
-		ImGui::Text("Texture: %s", buffer);
+		ImGui::Text("Texture: %s", mTexturePath.c_str());
 
 		ImGui::Text("Sampler: %s", GetSamplerTypeString(mSamplerType));
 
-		ConvertWideToMulti(buffer, mVertexShaderPath.c_str());
-		ImGui::Text("VertexShader: %s", buffer);
+		ImGui::Text("VertexShader: %s", mVertexShaderPath.c_str());
 
-		ConvertWideToMulti(buffer, mPixelShaderPath.c_str());
-		ImGui::Text("PixelShader: %s", buffer);
+		ImGui::Text("PixelShader: %s", mPixelShaderPath.c_str());
 
 		ImGui::TreePop();
 	}
