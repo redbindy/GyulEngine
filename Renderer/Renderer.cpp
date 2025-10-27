@@ -13,6 +13,7 @@
 #include "Actor.h"
 #include "DebugSphere.h"
 #include "StringHelper.h"
+#include "ClassicLightingMaterial.h"
 
 enum
 {
@@ -39,9 +40,15 @@ Renderer::Renderer(const HWND hWnd)
 	, mMeshMap()
 	, mMaterialMap()
 	, mTextureViewMap()
-	, mCBFrame{ Vector3(0.f, 0.f, 0.f), 0.f, Matrix::Identity }
+	, mCBFrame{ Vector3(0.f, 0.f, 0.f), { 0, }, Matrix::Identity }
 	, mpCBFrameGPU(nullptr)
 	, mpCBWorldMatrixGPU(nullptr)
+	, mCBDirectionalLight{
+		Vector3(0.f, -1.f, 0.f), { 0, },
+		Vector3(1.f, 1.f, 1.f), { 0, },
+		false
+	}
+	, mpCBDirectionalLightGPU(nullptr)
 	, mErrorCode(S_OK)
 	, mWidth(0)
 	, mHeight(0)
@@ -169,6 +176,7 @@ Renderer::~Renderer()
 	ImGui::DestroyContext();
 
 	// resources
+	SafeRelease(mpCBDirectionalLightGPU);
 	SafeRelease(mpCBWorldMatrixGPU);
 	SafeRelease(mpCBFrameGPU);
 
@@ -238,11 +246,21 @@ void Renderer::UpdateCBFrame(const Vector3 cameraPos, const Matrix viewProj)
 	mpDeviceContext->UpdateSubresource(mpCBFrameGPU, 0, nullptr, &uploadingBuffer, 0, 0);
 }
 
-void Renderer::UpdateCBWorldMatrix(const CBWorldMatrix& buffer)
+void Renderer::UpdateCBWorldMatrix(const Matrix& world)
 {
 	ASSERT(mpDeviceContext != nullptr);
 
-	mpDeviceContext->UpdateSubresource(mpCBWorldMatrixGPU, 0, nullptr, &buffer, 0, 0);
+	Matrix invTrans = world;
+	invTrans.Translation(Vector3(0.f, 0.f, 0.f));
+
+	invTrans = invTrans.Invert();
+
+	const CBWorldMatrix cb = {
+		world.Transpose(),
+		invTrans // hlsl이 col-major라 전치 생략
+	};
+
+	mpDeviceContext->UpdateSubresource(mpCBWorldMatrixGPU, 0, nullptr, &cb, 0, 0);
 }
 
 void Renderer::BeginFrame()
@@ -270,6 +288,16 @@ void Renderer::BeginFrame()
 void Renderer::RenderScene()
 {
 	ASSERT(mpDeviceContext != nullptr);
+
+	if (mCBDirectionalLight.bOn)
+	{
+		mpDeviceContext->UpdateSubresource(mpCBDirectionalLightGPU, 0, nullptr, &mCBDirectionalLight, 0, 0);
+	}
+	else
+	{
+		const CBDirectionalLight zeroLight = { Vector3(0.f), };
+		mpDeviceContext->UpdateSubresource(mpCBDirectionalLightGPU, 0, nullptr, &zeroLight, 0, 0);
+	}
 
 	for (MeshComponent* pMeshComponent : mMeshComponents)
 	{
@@ -327,6 +355,15 @@ void Renderer::DrawUI()
 		{
 			mCameraComponents[mSelectedNumber]->SetActive();
 		}
+
+		ImGui::Checkbox("DirectionalLight", &mCBDirectionalLight.bOn);
+		if (mCBDirectionalLight.bOn)
+		{
+			ImGui::SliderFloat3("Direction", reinterpret_cast<float*>(&mCBDirectionalLight.dir), -1.f, 1.f, "%.2f");
+			mCBDirectionalLight.dir.Normalize();
+
+			ImGui::SliderFloat3("Strength", reinterpret_cast<float*>(&mCBDirectionalLight.strength), 0.f, 1.f, "%.2f");
+		}
 	}
 	ImGui::PopID();
 }
@@ -371,6 +408,12 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBoundingSphere.hlsl"));
 	ASSERT(bResult);
 
+	bResult = renderer.TryCreateVertexShaderAndInputLayout(SHADER_PATH("VSBlinPhong.hlsl"), EVertexType::POS_NORMAL_UV);
+	ASSERT(bResult);
+
+	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBlinPhong.hlsl"));
+	ASSERT(bResult);
+
 	HRESULT hr = S_OK;
 	D3D11_SAMPLER_DESC samplerDescs[static_cast<uint8_t>(ESamplerType::COUNT)] = {
 		{
@@ -407,16 +450,21 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBFrame, sizeof(CBFrame), 0, renderer.mpCBFrameGPU);
 	ASSERT(bResult);
 
-	const CBWorldMatrix cbWorldMatrix = { Matrix::Identity };
+	const CBWorldMatrix cbWorldMatrix = { Matrix::Identity, Matrix::Identity };
 	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &cbWorldMatrix, sizeof(CBWorldMatrix), 0, renderer.mpCBWorldMatrixGPU);
 	ASSERT(bResult);
 
-	ID3D11Buffer* pConstantBuffers[2] = {
-		renderer.mpCBFrameGPU, renderer.mpCBWorldMatrixGPU
+	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBDirectionalLight, sizeof(CBDirectionalLight), 0, renderer.mpCBDirectionalLightGPU);
+	ASSERT(bResult);
+
+	ID3D11Buffer* const pConstantBuffers[3] = {
+		renderer.mpCBFrameGPU, renderer.mpCBWorldMatrixGPU, renderer.mpCBDirectionalLightGPU
 	};
 
-	renderer.mpDeviceContext->VSSetConstantBuffers(0, 2, pConstantBuffers);
-	renderer.mpDeviceContext->PSSetConstantBuffers(0, 2, pConstantBuffers);
+	constexpr int ARRAY_SIZE = ARRAYSIZE(pConstantBuffers);
+
+	renderer.mpDeviceContext->VSSetConstantBuffers(0, ARRAY_SIZE, pConstantBuffers);
+	renderer.mpDeviceContext->PSSetConstantBuffers(0, ARRAY_SIZE, pConstantBuffers);
 
 	D3D11_BLEND_DESC blendDesc;
 	ZeroMemory(&blendDesc, sizeof(blendDesc));
@@ -462,6 +510,9 @@ bool Renderer::TryInitialize(const HWND hWnd)
 
 	Material* const pBasicMaterial = new Material();
 	renderer.mMaterialMap.insert({ "Basic", pBasicMaterial });
+
+	ClassicLightingMaterial* const pClassicLightMaterial = new ClassicLightingMaterial();
+	renderer.mMaterialMap.insert({ "ClassicLighting", pClassicLightMaterial });
 
 	renderer.mpDebugSphere = new DebugSphere();
 
@@ -843,14 +894,14 @@ bool Renderer::TryCreateBuffer(
 	return true;
 }
 
-void Renderer::AddMeshComponent(MeshComponent* pMeshComponent)
+void Renderer::AddMeshComponent(MeshComponent* const pMeshComponent)
 {
 	ASSERT(pMeshComponent != nullptr);
 
 	mMeshComponents.push_back(pMeshComponent);
 }
 
-void Renderer::RemoveMeshComponent(MeshComponent* pMeshComponent)
+void Renderer::RemoveMeshComponent(MeshComponent* const pMeshComponent)
 {
 	ASSERT(pMeshComponent != nullptr);
 

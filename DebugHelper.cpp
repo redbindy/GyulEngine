@@ -7,7 +7,7 @@ enum
 	DEFAULT_BUFFER_SIZE = 256
 };
 
-void LogSystemError(const char* filename, const int line, const long errorCode, const char* const msg)
+void LogSystemError(const char* const filename, const int line, const long errorCode, const char* const msg)
 {
 	ASSERT(msg != nullptr);
 

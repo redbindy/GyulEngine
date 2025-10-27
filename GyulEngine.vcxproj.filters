@@ -171,6 +171,9 @@
     <ClInclude Include="InteractionCollider.h">
       <Filter>Main\.h</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer\ClassicLightingMaterial.h">
+      <Filter>Renderer\.h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
@@ -242,6 +245,9 @@
     <ClCompile Include="InteractionCollider.cpp">
       <Filter>Main\.cpp</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\ClassicLightingMaterial.cpp">
+      <Filter>Renderer\.cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
@@ -251,6 +257,12 @@
       <Filter>ImGui\Inc</Filter>
     </None>
     <None Include="Renderer\Shaders\Basic.hlsli">
+      <Filter>Renderer\Shader</Filter>
+    </None>
+    <None Include="Renderer\Shaders\BlinPhong.hlsli">
+      <Filter>Renderer\Shader</Filter>
+    </None>
+    <None Include="Renderer\Shaders\Common.hlsli">
       <Filter>Renderer\Shader</Filter>
     </None>
   </ItemGroup>
@@ -265,6 +277,12 @@
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
     <FxCompile Include="Renderer\Shaders\VSBoundingSphere.hlsl">
+      <Filter>Renderer\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\PSBlinPhong.hlsl">
+      <Filter>Renderer\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\VSBlinPhong.hlsl">
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
   </ItemGroup>

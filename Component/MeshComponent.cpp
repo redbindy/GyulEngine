@@ -19,7 +19,8 @@ MeshComponent::MeshComponent(Actor* const pOwner)
 	mpMesh = renderer.GetMeshOrNull("Cube");
 	ASSERT(mpMesh != nullptr);
 
-	mpMaterial = renderer.GetMaterialOrNull("Basic");
+	// mpMaterial = renderer.GetMaterialOrNull("Basic");
+	mpMaterial = renderer.GetMaterialOrNull("ClassicLighting");
 	ASSERT(mpMaterial != nullptr);
 
 	renderer.AddMeshComponent(this);
@@ -47,12 +48,12 @@ void MeshComponent::Draw(ID3D11DeviceContext& deviceContext) const
 	mpMesh->Bind(deviceContext);
 	mpMaterial->Bind(deviceContext);
 
-	Actor* const pActor = GetOwner();
+	Actor& actor = *GetOwner();
 
-	const Matrix transform = pActor->GetTransform();
+	const Matrix transform = actor.GetTransform();
 
 	Renderer& renderer = Renderer::GetInstance();
-	renderer.UpdateCBWorldMatrix({ transform.Transpose() });
+	renderer.UpdateCBWorldMatrix(transform);
 
 	deviceContext.DrawIndexed(mpMesh->GetIndexCount(), 0, 0);
 }

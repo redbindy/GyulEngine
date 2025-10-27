@@ -7,5 +7,7 @@
 class IUIDrawable
 {
 public:
+	virtual ~IUIDrawable() = default;
+
 	virtual void DrawUI() = 0;
 };

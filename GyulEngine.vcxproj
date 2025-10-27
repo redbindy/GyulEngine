@@ -148,6 +148,7 @@
     <ClInclude Include="Component\ComponentGenerator.h" />
     <ClInclude Include="DebugHelper.h" />
     <ClInclude Include="InteractionCollider.h" />
+    <ClInclude Include="Renderer\ClassicLightingMaterial.h" />
     <ClInclude Include="Renderer\DebugSphere.h" />
     <ClInclude Include="Renderer\ETypeForRenderer.h" />
     <ClInclude Include="GameCore.h" />
@@ -181,6 +182,7 @@
     <ClCompile Include="Component\Component.cpp" />
     <ClCompile Include="DebugHelper.cpp" />
     <ClCompile Include="InteractionCollider.cpp" />
+    <ClCompile Include="Renderer\ClassicLightingMaterial.cpp" />
     <ClCompile Include="Renderer\DebugSphere.cpp" />
     <ClCompile Include="GameCore.cpp" />
     <ClCompile Include="Component\CameraControllerComponent.cpp" />
@@ -202,15 +204,31 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Renderer\Shaders\Basic.hlsli" />
+    <None Include="Renderer\Shaders\BlinPhong.hlsli" />
+    <None Include="Renderer\Shaders\Common.hlsli" />
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl" />
     <None Include="ThirdParty\ImGui\Inc\imgui.natstepfilter" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Renderer\Shaders\PSBlinPhong.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="Renderer\Shaders\PSBoundingSphere.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\VSBlinPhong.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="Renderer\Shaders\VSBoundingSphere.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

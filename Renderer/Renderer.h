@@ -11,6 +11,9 @@
 #include "Vertex.h"
 #include "IUIDrawable.h"
 #include "ETypeForRenderer.h"
+#include "CommonDefs.h"
+
+#define GET_PADDING_SIZE_CBUFFER(type) (GET_PADDING_SIZE(16, type))
 
 class Mesh;
 class Material;
@@ -24,7 +27,8 @@ class DebugSphere;
 struct CBFrame
 {
 	Vector3 cameraPos;
-	float dummy;
+	uint8_t padding[GET_PADDING_SIZE_CBUFFER(Vector3)];
+
 	Matrix viewProj;
 };
 static_assert(sizeof(CBFrame) % 16 == 0);
@@ -32,9 +36,32 @@ static_assert(sizeof(CBFrame) % 16 == 0);
 struct CBWorldMatrix
 {
 	Matrix world;
+	Matrix invTransNormal;
 };
 static_assert(sizeof(CBWorldMatrix) % 16 == 0);
+
+struct CBDirectionalLight
+{
+	Vector3 dir;
+	uint8_t padding0[GET_PADDING_SIZE_CBUFFER(Vector3)];
+
+	Vector3 strength;
+	uint8_t padding1[GET_PADDING_SIZE_CBUFFER(Vector3)];
+
+	bool bOn;
+	uint8_t padding2[GET_PADDING_SIZE_CBUFFER(bool)];
+};
+static_assert(sizeof(CBDirectionalLight) % 16 == 0);
 #pragma warning(pop)
+
+enum SlotNumber
+{
+	FRAME = 0,
+	WORLD_MATRIX,
+	DIRECTIONAL_LIGHT,
+	MATERIAL,
+	MATERIAL_ADDITIONAL
+};
 
 class Renderer final : IUIDrawable
 {
@@ -45,7 +72,7 @@ public:
 	Renderer& operator=(Renderer&& other) = delete;
 
 	void UpdateCBFrame(const Vector3 cameraPos, const Matrix viewProj);
-	void UpdateCBWorldMatrix(const CBWorldMatrix& buffer);
+	void UpdateCBWorldMatrix(const Matrix& world);
 
 	void BeginFrame();
 	void RenderScene();
@@ -77,8 +104,8 @@ public:
 		ID3D11Buffer*& pOutBuffer
 	) const;
 
-	void AddMeshComponent(MeshComponent* pMeshComponent);
-	void RemoveMeshComponent(MeshComponent* pMeshComponent);
+	void AddMeshComponent(MeshComponent* const pMeshComponent);
+	void RemoveMeshComponent(MeshComponent* const pMeshComponent);
 
 	void AddCameraComponent(CameraComponent* const pCameraComponent);
 	void RemoveCameraComponent(CameraComponent* const pCameraComponent);
@@ -193,6 +220,9 @@ private:
 	ID3D11Buffer* mpCBFrameGPU;
 
 	ID3D11Buffer* mpCBWorldMatrixGPU;
+
+	CBDirectionalLight mCBDirectionalLight;
+	ID3D11Buffer* mpCBDirectionalLightGPU;
 
 	// properties
 	HRESULT mErrorCode;

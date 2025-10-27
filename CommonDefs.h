@@ -8,6 +8,8 @@
 
 #define UTF8_TEXT(str) (reinterpret_cast<const char*>(u8##str))
 
+#define GET_PADDING_SIZE(align, type) ((align) - sizeof(type))
+
 enum EConstant
 {
 	MAX_LABEL_LENGTH = 128

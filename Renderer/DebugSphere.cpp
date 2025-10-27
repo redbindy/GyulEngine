@@ -52,7 +52,7 @@ void DebugSphere::Draw(ID3D11DeviceContext& deviceContext)
 	const Matrix worldMat = scale * translation;
 
 	Renderer& renderer = Renderer::GetInstance();
-	renderer.UpdateCBWorldMatrix({ worldMat.Transpose() });
+	renderer.UpdateCBWorldMatrix(worldMat);
 
 	constexpr UINT SAMPLE_MASK = 0xFFFFFFFF;
 	deviceContext.OMSetBlendState(mpBlendState, nullptr, SAMPLE_MASK);

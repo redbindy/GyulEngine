@@ -77,28 +77,25 @@ void Mesh::Bind(ID3D11DeviceContext& deviceContext) const
 
 void Mesh::DrawUI()
 {
-	if (ImGui::TreeNodeEx("Mesh", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+	ImGui::SeparatorText("Mesh");
+
+	ImGui::Text("Vertices: %d", mVertexCount);
+	ImGui::Text("Indices: %d", mIndexCount);
+	ImGui::Text("VertexType: %s", GetVertexTypeString(mVertexType));
+
+	const char* topologyString = nullptr;
+	switch (mPrimitiveTopology)
 	{
-		ImGui::Text("Vertices: %d", mVertexCount);
-		ImGui::Text("Indices: %d", mIndexCount);
-		ImGui::Text("VertexType: %s", GetVertexTypeString(mVertexType));
+	case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+		topologyString = "TriangleList";
+		break;
 
-		const char* topologyString = nullptr;
-		switch (mPrimitiveTopology)
-		{
-		case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
-			topologyString = "TriangleList";
-			break;
-
-		default:
-			topologyString = "";
-			break;
-		}
-
-		ImGui::Text("Topology: %s", topologyString);
-
-		ImGui::TreePop();
+	default:
+		topologyString = "";
+		break;
 	}
+
+	ImGui::Text("Topology: %s", topologyString);
 }
 
 Mesh* Shape::CreateTriangleAlloc()
