@@ -12,7 +12,7 @@ ClassicLightingMaterial::ClassicLightingMaterial()
 	const bool bResult = renderer.TryCreateBuffer(
 		EBufferType::CONSTANT,
 		&mCBClassicLightingMaterial,
-		sizeof(ClassicLightingMaterial),
+		sizeof(CBClassicLightingMaterial),
 		0,
 		mpClassicLightingMaterialGPU
 	);

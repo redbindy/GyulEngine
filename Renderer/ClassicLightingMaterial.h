@@ -25,16 +25,13 @@ private:
 	struct CBClassicLightingMaterial
 	{
 		Vector3 ambient;
-		uint8_t padding0[GET_PADDING_SIZE_CBUFFER(Vector3)];
+		float shininess;
 
 		Vector3 diffuse;
 		uint8_t paddin1[GET_PADDING_SIZE_CBUFFER(Vector3)];
 
 		Vector3 specular;
 		uint8_t padding2[GET_PADDING_SIZE_CBUFFER(Vector3)];
-
-		float shininess;
-		uint8_t padding3[GET_PADDING_SIZE_CBUFFER(float)];
 	};
 	static_assert(sizeof(CBClassicLightingMaterial) % 16 == 0);
 

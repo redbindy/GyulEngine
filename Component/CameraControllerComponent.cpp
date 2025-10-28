@@ -5,7 +5,7 @@
 #include "Actor.h"
 
 CameraControllerComponent::CameraControllerComponent(Actor* const pOwner)
-	: Component(pOwner, "CameraControllerComponent")
+	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::CAMERA_CONTROLLER))
 	, mPrevMousePosition{ 0.f, 0.f }
 	, mSpeed(3.f)
 	, mMoveKeys{ 'W', 'S', 'A', 'D' }

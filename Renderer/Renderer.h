@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <string>
+#include <queue>
 
 #include <Windows.h>
 #include <d3d11.h>
@@ -14,6 +15,11 @@
 #include "CommonDefs.h"
 
 #define GET_PADDING_SIZE_CBUFFER(type) (GET_PADDING_SIZE(16, type))
+
+enum
+{
+	MAX_LIGHTS = 8
+};
 
 class Mesh;
 class Material;
@@ -47,11 +53,25 @@ struct CBDirectionalLight
 
 	Vector3 strength;
 	uint8_t padding1[GET_PADDING_SIZE_CBUFFER(Vector3)];
-
-	bool bOn;
-	uint8_t padding2[GET_PADDING_SIZE_CBUFFER(bool)];
 };
 static_assert(sizeof(CBDirectionalLight) % 16 == 0);
+
+struct Light
+{
+	Vector3 position;
+	float fallOffStart;
+	Vector3 strength;
+	float fallOffEnd;
+	Vector3 direction;
+	float spotPower;
+};
+static_assert(sizeof(Light) % 16 == 0);
+
+struct CBLight
+{
+	Light lights[MAX_LIGHTS];
+};
+static_assert(sizeof(CBLight) % 16 == 0);
 #pragma warning(pop)
 
 enum SlotNumber
@@ -60,7 +80,8 @@ enum SlotNumber
 	WORLD_MATRIX,
 	DIRECTIONAL_LIGHT,
 	MATERIAL,
-	MATERIAL_ADDITIONAL
+	MATERIAL_ADDITIONAL,
+	LIGHT_ADDITIONAL
 };
 
 class Renderer final : IUIDrawable
@@ -95,6 +116,9 @@ public:
 	Material* GetMaterialOrNull(const std::string& path) const;
 	ID3D11ShaderResourceView* GetTextureViewOrNull(const std::string& path) const;
 	ID3D11BlendState* GetBlendState() const;
+
+	Light* AcquireLightOrNull();
+	void ReturnLight(Light* const pLight);
 
 	bool TryCreateBuffer(
 		const EBufferType type,
@@ -223,6 +247,11 @@ private:
 
 	CBDirectionalLight mCBDirectionalLight;
 	ID3D11Buffer* mpCBDirectionalLightGPU;
+	bool mbOnDirectionalLight;
+
+	CBLight mCBLight;
+	std::queue<Light*> mLightPool;
+	ID3D11Buffer* mpCBLightGPU;
 
 	// properties
 	HRESULT mErrorCode;

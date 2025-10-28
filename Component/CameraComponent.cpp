@@ -4,7 +4,7 @@
 #include "Actor.h"
 
 CameraComponent::CameraComponent(Actor* const pOwner)
-	: Component(pOwner, "CameraComponent")
+	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::CAMERA))
 	, mbActive(false)
 	, mbOrthogonal(false)
 	, mViewWidth(1.f)

@@ -174,6 +174,9 @@
     <ClInclude Include="Renderer\ClassicLightingMaterial.h">
       <Filter>Renderer\.h</Filter>
     </ClInclude>
+    <ClInclude Include="Component\LightComponent.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
@@ -247,6 +250,9 @@
     </ClCompile>
     <ClCompile Include="Renderer\ClassicLightingMaterial.cpp">
       <Filter>Renderer\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\LightComponent.cpp">
+      <Filter>Component\.cpp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

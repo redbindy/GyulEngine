@@ -14,6 +14,7 @@
 #include "DebugSphere.h"
 #include "StringHelper.h"
 #include "ClassicLightingMaterial.h"
+#include "Component/LightComponent.h"
 
 enum
 {
@@ -45,10 +46,13 @@ Renderer::Renderer(const HWND hWnd)
 	, mpCBWorldMatrixGPU(nullptr)
 	, mCBDirectionalLight{
 		Vector3(0.f, -1.f, 0.f), { 0, },
-		Vector3(1.f, 1.f, 1.f), { 0, },
-		false
+		Vector3(1.f, 1.f, 1.f), { 0, }
 	}
+	, mbOnDirectionalLight(false)
 	, mpCBDirectionalLightGPU(nullptr)
+	, mCBLight{}
+	, mLightPool()
+	, mpCBLightGPU(nullptr)
 	, mErrorCode(S_OK)
 	, mWidth(0)
 	, mHeight(0)
@@ -176,6 +180,7 @@ Renderer::~Renderer()
 	ImGui::DestroyContext();
 
 	// resources
+	SafeRelease(mpCBLightGPU);
 	SafeRelease(mpCBDirectionalLightGPU);
 	SafeRelease(mpCBWorldMatrixGPU);
 	SafeRelease(mpCBFrameGPU);
@@ -289,7 +294,7 @@ void Renderer::RenderScene()
 {
 	ASSERT(mpDeviceContext != nullptr);
 
-	if (mCBDirectionalLight.bOn)
+	if (mbOnDirectionalLight)
 	{
 		mpDeviceContext->UpdateSubresource(mpCBDirectionalLightGPU, 0, nullptr, &mCBDirectionalLight, 0, 0);
 	}
@@ -298,6 +303,9 @@ void Renderer::RenderScene()
 		const CBDirectionalLight zeroLight = { Vector3(0.f), };
 		mpDeviceContext->UpdateSubresource(mpCBDirectionalLightGPU, 0, nullptr, &zeroLight, 0, 0);
 	}
+
+	mpDeviceContext->PSSetConstantBuffers(SlotNumber::LIGHT_ADDITIONAL, 1, &mpCBLightGPU);
+	mpDeviceContext->UpdateSubresource(mpCBLightGPU, 0, nullptr, &mCBLight, 0, 0);
 
 	for (MeshComponent* pMeshComponent : mMeshComponents)
 	{
@@ -356,12 +364,10 @@ void Renderer::DrawUI()
 			mCameraComponents[mSelectedNumber]->SetActive();
 		}
 
-		ImGui::Checkbox("DirectionalLight", &mCBDirectionalLight.bOn);
-		if (mCBDirectionalLight.bOn)
+		ImGui::Checkbox("DirectionalLight", &mbOnDirectionalLight);
+		if (mbOnDirectionalLight)
 		{
 			ImGui::SliderFloat3("Direction", reinterpret_cast<float*>(&mCBDirectionalLight.dir), -1.f, 1.f, "%.2f");
-			mCBDirectionalLight.dir.Normalize();
-
 			ImGui::SliderFloat3("Strength", reinterpret_cast<float*>(&mCBDirectionalLight.strength), 0.f, 1.f, "%.2f");
 		}
 	}
@@ -456,6 +462,14 @@ bool Renderer::TryInitialize(const HWND hWnd)
 
 	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBDirectionalLight, sizeof(CBDirectionalLight), 0, renderer.mpCBDirectionalLightGPU);
 	ASSERT(bResult);
+
+	bResult = renderer.TryCreateBuffer(EBufferType::CONSTANT, &renderer.mCBLight, sizeof(CBLight), 0, renderer.mpCBLightGPU);
+	ASSERT(bResult);
+
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		renderer.mLightPool.push(renderer.mCBLight.lights + i);
+	}
 
 	ID3D11Buffer* const pConstantBuffers[3] = {
 		renderer.mpCBFrameGPU, renderer.mpCBWorldMatrixGPU, renderer.mpCBDirectionalLightGPU
@@ -841,6 +855,28 @@ ID3D11ShaderResourceView* Renderer::GetTextureViewOrNull(const std::string& path
 ID3D11BlendState* Renderer::GetBlendState() const
 {
 	return mpBlendState;
+}
+
+Light* Renderer::AcquireLightOrNull()
+{
+	if (mLightPool.empty())
+	{
+		return nullptr;
+	}
+
+	Light* const pRet = mLightPool.front();
+	mLightPool.pop();
+
+	return pRet;
+}
+
+void Renderer::ReturnLight(Light* const pLight)
+{
+	ASSERT(pLight != nullptr);
+
+	ZeroMemory(pLight, sizeof(Light));
+
+	mLightPool.push(pLight);
 }
 
 bool Renderer::TryCreateBuffer(

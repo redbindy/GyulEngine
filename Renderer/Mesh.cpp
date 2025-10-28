@@ -213,8 +213,12 @@ Mesh* Shape::CreateSphereAlloc()
 			const Matrix rotationY = Matrix::CreateRotationY(DELTA_THETA * x);
 
 			const Vector3 currPoint = Vector3::Transform(sliceStart, rotationY);
+			Vector3 normal = currPoint; // 원점 -> 정점 벡터로 가정
+			normal.Normalize();
 
-			const Vertex vertex = { currPoint, { 0.f, 0.f, 0.f }, { 0.f, 0.f } };
+			const Vector2 uv = Vector2(x / static_cast<float>(sliceCount), y / static_cast<float>(stackCount));
+
+			const Vertex vertex = { currPoint, normal, uv };
 
 			vertices.push_back(vertex);
 		}

@@ -9,7 +9,7 @@
 #include "StringHelper.h"
 
 MeshComponent::MeshComponent(Actor* const pOwner)
-	: Component(pOwner, "MeshComponent")
+	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::MESH))
 	, mpMesh(nullptr)
 	, mpMaterial(nullptr)
 {
@@ -17,6 +17,7 @@ MeshComponent::MeshComponent(Actor* const pOwner)
 
 	// mpMesh = renderer->GetMeshOrNull("Triangle");
 	mpMesh = renderer.GetMeshOrNull("Cube");
+	// mpMesh = renderer.GetMeshOrNull("Sphere");
 	ASSERT(mpMesh != nullptr);
 
 	// mpMaterial = renderer.GetMaterialOrNull("Basic");
