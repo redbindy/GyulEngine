@@ -246,3 +246,20 @@ Mesh* Shape::CreateSphereAlloc()
 		static_cast<UINT>(indices.size())
 	);
 }
+
+Mesh* Shape::CreateSquareAlloc()
+{
+	Vertex vertices[] = {
+		{ { -1, -1, 0.f }, { 0.f, 0.f, -1.f }, { 0.f, 1.f } },
+		{ { -1, 1, 0.f }, { 0.f, 0.f, -1.f }, { 0.f, 0.f } },
+		{ { 1, -1, 0.f }, { 0.f, 0.f, -1.f }, { 1.f, 1.f } },
+		{ { 1, 1, 0.f }, { 0.f, 0.f, -1.f }, { 1.f, 0.f } }
+	};
+
+	int32_t indices[] = {
+		0, 1, 2,
+		2, 1, 3
+	};
+
+	return new Mesh(vertices, ARRAYSIZE(vertices), indices, ARRAYSIZE(indices));
+}

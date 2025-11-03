@@ -9,7 +9,7 @@ LightComponent::LightComponent(Actor* const pOwner)
 	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::LIGHT))
 	, mLight(Renderer::GetInstance().AcquireLightOrNull())
 {
-
+	ASSERT(pOwner != nullptr);
 }
 
 LightComponent::~LightComponent()

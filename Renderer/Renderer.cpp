@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "DDSTextureLoader.h"
+#include "WICTextureLoader.h"
 
 #include "CommonDefs.h"
 #include "ComHelper.h"
@@ -32,11 +33,15 @@ Renderer::Renderer(const HWND hWnd)
 	, mViewport{ 0.f, }
 	, mpWireframeState(nullptr)
 	, mbWireframe(false)
+	, mbAntiAliasing(false)
+	, mpNonCullingState(nullptr)
 	, mPixelShaderMap()
 	, mpRenderTargetViewGPU(nullptr)
 	, mpDepthStencilViewGPU(nullptr)
 	, mpBlendState(nullptr)
 	, mpDepthReadOnlyState(nullptr)
+	, mpMultiSampleRendereTargetViewGPU(nullptr)
+	, mpMultiSampleDepthStencilViewGPU(nullptr)
 	, mSamplerStateMap{ nullptr, }
 	, mMeshMap()
 	, mMaterialMap()
@@ -134,7 +139,22 @@ Renderer::Renderer(const HWND hWnd)
 	hr = mpDevice->CreateRasterizerState(&wireframeState, &mpWireframeState);
 	if (FAILED(hr))
 	{
-		LOG_SYSTEM_ERROR(hr, "CreateRasterizerState");
+		LOG_SYSTEM_ERROR(hr, "CreateRasterizerState - wireframe");
+
+		ASSERT(false);
+	}
+
+	D3D11_RASTERIZER_DESC nonCulling;
+	ZeroMemory(&nonCulling, sizeof(nonCulling));
+
+	nonCulling.FillMode = D3D11_FILL_SOLID;
+	nonCulling.CullMode = D3D11_CULL_NONE;
+	nonCulling.DepthClipEnable = true;
+
+	hr = mpDevice->CreateRasterizerState(&nonCulling, &mpNonCullingState);
+	if (FAILED(hr))
+	{
+		LOG_SYSTEM_ERROR(hr, "CreateRasterizerState - nonCulling");
 
 		ASSERT(false);
 	}
@@ -206,6 +226,8 @@ Renderer::~Renderer()
 	}
 
 	// om
+	SafeRelease(mpMultiSampleDepthStencilViewGPU);
+	SafeRelease(mpMultiSampleRendereTargetViewGPU);
 	SafeRelease(mpDepthReadOnlyState);
 	SafeRelease(mpBlendState);
 	SafeRelease(mpDepthStencilViewGPU);
@@ -218,6 +240,7 @@ Renderer::~Renderer()
 	}
 
 	// rs
+	SafeRelease(mpNonCullingState);
 	SafeRelease(mpWireframeState);
 
 	// vs
@@ -273,9 +296,6 @@ void Renderer::BeginFrame()
 	ASSERT(mpDeviceContext != nullptr);
 	ASSERT(mpSwapChain != nullptr);
 
-	mpDeviceContext->ClearRenderTargetView(mpRenderTargetViewGPU, mClearColor);
-	mpDeviceContext->ClearDepthStencilView(mpDepthStencilViewGPU, D3D11_CLEAR_DEPTH, 1.f, 255);
-
 	mpDeviceContext->RSSetViewports(1, &mViewport);
 
 	if (mbWireframe)
@@ -287,7 +307,20 @@ void Renderer::BeginFrame()
 		mpDeviceContext->RSSetState(nullptr);
 	}
 
-	mpDeviceContext->OMSetRenderTargets(1, &mpRenderTargetViewGPU, mpDepthStencilViewGPU);
+	if (!mbAntiAliasing)
+	{
+		mpDeviceContext->ClearRenderTargetView(mpRenderTargetViewGPU, mClearColor);
+		mpDeviceContext->ClearDepthStencilView(mpDepthStencilViewGPU, D3D11_CLEAR_DEPTH, 1.f, 255);
+
+		mpDeviceContext->OMSetRenderTargets(1, &mpRenderTargetViewGPU, mpDepthStencilViewGPU);
+	}
+	else
+	{
+		mpDeviceContext->ClearRenderTargetView(mpMultiSampleRendereTargetViewGPU, mClearColor);
+		mpDeviceContext->ClearDepthStencilView(mpMultiSampleDepthStencilViewGPU, D3D11_CLEAR_DEPTH, 1.f, 255);
+
+		mpDeviceContext->OMSetRenderTargets(1, &mpMultiSampleRendereTargetViewGPU, mpMultiSampleDepthStencilViewGPU);
+	}
 }
 
 void Renderer::RenderScene()
@@ -338,6 +371,8 @@ void Renderer::DrawUI()
 		ImGui::SameLine();
 		ImGui::Checkbox("Wireframe(F4)", &mbWireframe);
 
+		ImGui::Checkbox("Antialiasing", &mbAntiAliasing);
+
 		constexpr int TARGET_FRAME_RATE_COUNT = 1;
 
 		// TODO: 모니터에 맞는 옵션 선택지 추가
@@ -384,6 +419,20 @@ void Renderer::EndFrame()
 {
 	ASSERT(mpSwapChain != nullptr);
 
+	if (mbAntiAliasing)
+	{
+		ID3D11Resource* pMultiSampleBuffer = nullptr;
+		mpMultiSampleRendereTargetViewGPU->GetResource(&pMultiSampleBuffer);
+
+		ID3D11Resource* pBackBuffer = nullptr;
+		mpRenderTargetViewGPU->GetResource(&pBackBuffer);
+
+		mpDeviceContext->ResolveSubresource(pBackBuffer, 0, pMultiSampleBuffer, 0, DXGI_FORMAT_B8G8R8A8_UNORM);
+
+		SafeRelease(pMultiSampleBuffer);
+		SafeRelease(pBackBuffer);
+	}
+
 	mpSwapChain->Present(mbVSync, 0);
 }
 
@@ -402,23 +451,32 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	Renderer& renderer = *spInstance;
 
 	// 공유 혹은 기본 리소스들
-	bool bResult = renderer.TryCreateVertexShaderAndInputLayout(SHADER_PATH("VSBasic.hlsl"), EVertexType::POS_NORMAL_UV);
-	ASSERT(bResult);
+	constexpr const std::pair<const char*, EVertexType> vertexShaderEntries[] = {
+		{ SHADER_PATH("VSBasic.hlsl"), EVertexType::POS_NORMAL_UV },
+		{ SHADER_PATH("VSBoundingSphere.hlsl"), EVertexType::POS_NORMAL_UV },
+		{ SHADER_PATH("VSBlinPhong.hlsl"), EVertexType::POS_NORMAL_UV },
+		{ SHADER_PATH("VSSprite.hlsl"), EVertexType::POS_NORMAL_UV }
+	};
 
-	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBasic.hlsl"));
-	ASSERT(bResult);
+	bool bResult = true;
+	for (const std::pair<const char*, EVertexType>& pair : vertexShaderEntries)
+	{
+		bResult = renderer.TryCreateVertexShaderAndInputLayout(pair.first, pair.second);
+		ASSERT(bResult);
+	}
 
-	bResult = renderer.TryCreateVertexShaderAndInputLayout(SHADER_PATH("VSBoundingSphere.hlsl"), EVertexType::POS_NORMAL_UV);
-	ASSERT(bResult);
+	constexpr const char* const pixelShaderPaths[] = {
+		SHADER_PATH("PSBasic.hlsl"),
+		SHADER_PATH("PSBoundingSphere.hlsl"),
+		SHADER_PATH("PSBlinPhong.hlsl"),
+		SHADER_PATH("PSSprite.hlsl")
+	};
 
-	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBoundingSphere.hlsl"));
-	ASSERT(bResult);
-
-	bResult = renderer.TryCreateVertexShaderAndInputLayout(SHADER_PATH("VSBlinPhong.hlsl"), EVertexType::POS_NORMAL_UV);
-	ASSERT(bResult);
-
-	bResult = renderer.TryCreatePixelShader(SHADER_PATH("PSBlinPhong.hlsl"));
-	ASSERT(bResult);
+	for (const char* const path : pixelShaderPaths)
+	{
+		bResult = renderer.TryCreatePixelShader(path);
+		ASSERT(bResult);
+	}
 
 	HRESULT hr = S_OK;
 	D3D11_SAMPLER_DESC samplerDescs[static_cast<uint8_t>(ESamplerType::COUNT)] = {
@@ -516,6 +574,9 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	Mesh* const pTriangle = Shape::CreateTriangleAlloc();
 	renderer.mMeshMap.insert({ "Triangle", pTriangle });
 
+	Mesh* const pSquare = Shape::CreateSquareAlloc();
+	renderer.mMeshMap.insert({ "Square", pSquare });
+
 	Mesh* const pCube = Shape::CreateCubeAlloc();
 	renderer.mMeshMap.insert({ "Cube", pCube });
 
@@ -524,6 +585,9 @@ bool Renderer::TryInitialize(const HWND hWnd)
 
 	Material* const pBasicMaterial = new Material();
 	renderer.mMaterialMap.insert({ "Basic", pBasicMaterial });
+
+	Material* const pSpriteMaterial = new Material(SHADER_PATH("VSSprite.hlsl"), SHADER_PATH("PSSprite.hlsl"));
+	renderer.mMaterialMap.insert({ "Sprite", pSpriteMaterial });
 
 	ClassicLightingMaterial* const pClassicLightMaterial = new ClassicLightingMaterial();
 	renderer.mMaterialMap.insert({ "ClassicLighting", pClassicLightMaterial });
@@ -595,8 +659,8 @@ void Renderer::OnResize(const int width, const int height)
 	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
-	ID3D11Texture2D* depthStencilBuffer = nullptr;
-	hr = mpDevice->CreateTexture2D(&depthBufferDesc, nullptr, &depthStencilBuffer);
+	ID3D11Texture2D* pDepthStencilBuffer = nullptr;
+	hr = mpDevice->CreateTexture2D(&depthBufferDesc, nullptr, &pDepthStencilBuffer);
 	{
 		if (FAILED(hr))
 		{
@@ -610,10 +674,10 @@ void Renderer::OnResize(const int width, const int height)
 		D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
 		ZeroMemory(&depthStencilViewDesc, sizeof(depthStencilViewDesc));
 
-		depthBufferDesc.Format = depthBufferDesc.Format;
+		depthStencilViewDesc.Format = depthBufferDesc.Format;
 		depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
-		hr = mpDevice->CreateDepthStencilView(depthStencilBuffer, &depthStencilViewDesc, &mpDepthStencilViewGPU);
+		hr = mpDevice->CreateDepthStencilView(pDepthStencilBuffer, &depthStencilViewDesc, &mpDepthStencilViewGPU);
 
 		if (FAILED(hr))
 		{
@@ -624,7 +688,104 @@ void Renderer::OnResize(const int width, const int height)
 			return;
 		}
 	}
-	SafeRelease(depthStencilBuffer);
+	SafeRelease(pDepthStencilBuffer);
+
+	D3D11_TEXTURE2D_DESC multiSampleBufferDesc;
+	ZeroMemory(&multiSampleBufferDesc, sizeof(multiSampleBufferDesc));
+
+	multiSampleBufferDesc.Width = width;
+	multiSampleBufferDesc.Height = height;
+	multiSampleBufferDesc.MipLevels = 1;
+	multiSampleBufferDesc.ArraySize = 1;
+	multiSampleBufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	multiSampleBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	multiSampleBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+
+	UINT quality = 0;
+	UINT sampleCount = 1;
+	hr = mpDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, &quality);
+
+	if (SUCCEEDED(hr) && quality > 0)
+	{
+		sampleCount = 4;
+		--quality;
+	}
+
+	multiSampleBufferDesc.SampleDesc.Count = sampleCount;
+	multiSampleBufferDesc.SampleDesc.Quality = quality;
+
+	ID3D11Texture2D* pMultiSampleBuffer = nullptr;
+	hr = mpDevice->CreateTexture2D(&multiSampleBufferDesc, nullptr, &pMultiSampleBuffer);
+	{
+		if (FAILED(hr))
+		{
+			LOG_SYSTEM_ERROR(hr, "CreateTexture2D - MultiSampleBuffer");
+
+			ASSERT(false);
+
+			return;
+		}
+
+		SafeRelease(mpMultiSampleRendereTargetViewGPU);
+
+		hr = mpDevice->CreateRenderTargetView(pMultiSampleBuffer, nullptr, &mpMultiSampleRendereTargetViewGPU);
+
+		if (FAILED(hr))
+		{
+			LOG_SYSTEM_ERROR(hr, "CreateRenderTargetView - MultiSampleView");
+
+			ASSERT(false);
+
+			return;
+		}
+	}
+	SafeRelease(pMultiSampleBuffer);
+
+	D3D11_TEXTURE2D_DESC multiSampleDepthBufferDesc;
+	ZeroMemory(&multiSampleDepthBufferDesc, sizeof(multiSampleDepthBufferDesc));
+
+	multiSampleDepthBufferDesc.Width = width;
+	multiSampleDepthBufferDesc.Height = height;
+	multiSampleDepthBufferDesc.MipLevels = 1;
+	multiSampleDepthBufferDesc.ArraySize = 1;
+	multiSampleDepthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	multiSampleDepthBufferDesc.SampleDesc.Count = sampleCount;
+	multiSampleDepthBufferDesc.SampleDesc.Quality = quality;
+	multiSampleDepthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	multiSampleDepthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+	ID3D11Texture2D* pMultiSampleDepthBuffer = nullptr;
+	hr = mpDevice->CreateTexture2D(&multiSampleDepthBufferDesc, nullptr, &pMultiSampleDepthBuffer);
+	{
+		if (FAILED(hr))
+		{
+			LOG_SYSTEM_ERROR(hr, "CreateTexture2D - MultiSampleDepthBuffer");
+
+			ASSERT(false);
+
+			return;
+		}
+
+		SafeRelease(mpMultiSampleDepthStencilViewGPU);
+
+		D3D11_DEPTH_STENCIL_VIEW_DESC multiSampleDepthBufferViewDesc;
+		ZeroMemory(&multiSampleDepthBufferViewDesc, sizeof(multiSampleDepthBufferViewDesc));
+
+		multiSampleDepthBufferViewDesc.Format = multiSampleDepthBufferViewDesc.Format;
+		multiSampleDepthBufferViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+
+		hr = mpDevice->CreateDepthStencilView(pMultiSampleDepthBuffer, &multiSampleDepthBufferViewDesc, &mpMultiSampleDepthStencilViewGPU);
+
+		if (FAILED(hr))
+		{
+			LOG_SYSTEM_ERROR(hr, "CreateDepthStencilView - MultiSampleDepthBuffer");
+
+			ASSERT(false);
+
+			return;
+		}
+	}
+	SafeRelease(pMultiSampleDepthBuffer);
 
 	ImGui_ImplDX11_InvalidateDeviceObjects();
 	ImGui_ImplDX11_CreateDeviceObjects();
@@ -644,7 +805,7 @@ bool Renderer::TryCreateVertexShaderAndInputLayout(const std::string& path, cons
 {
 	ID3DBlob* pShaderBlob = nullptr;
 	{
-		TCHAR pathWideStr[MAX_PATH + 1];
+		TCHAR pathWideStr[PATH_BUFFER_SIZE + 1];
 		ConvertMultiToWide(pathWideStr, path.c_str());
 
 		if (!tryCompileShader(pathWideStr, EShaderType::VERTEX, pShaderBlob))
@@ -716,7 +877,7 @@ bool Renderer::TryCreatePixelShader(const std::string& path)
 {
 	ID3DBlob* pShaderBlob = nullptr;
 	{
-		TCHAR pathWideStr[MAX_PATH + 1];
+		TCHAR pathWideStr[PATH_BUFFER_SIZE + 1];
 		ConvertMultiToWide(pathWideStr, path.c_str());
 
 		if (!tryCompileShader(pathWideStr, EShaderType::PIXEL, pShaderBlob))
@@ -754,13 +915,22 @@ bool Renderer::TryCreateTextureView(const std::string& path)
 {
 	ID3D11ShaderResourceView* pTextureView = nullptr;
 
-	TCHAR pathWideStr[MAX_PATH + 1];
+	TCHAR pathWideStr[PATH_BUFFER_SIZE];
 	ConvertMultiToWide(pathWideStr, path.c_str());
 
-	const HRESULT hr = CreateDDSTextureFromFile(mpDevice, pathWideStr, nullptr, &pTextureView);
+	HRESULT hr = S_OK;
+	if (path.find(".dds") != path.npos)
+	{
+		hr = CreateDDSTextureFromFile(mpDevice, pathWideStr, nullptr, &pTextureView);
+	}
+	else
+	{
+		hr = CreateWICTextureFromFile(mpDevice, pathWideStr, nullptr, &pTextureView);
+	}
+
 	if (FAILED(hr))
 	{
-		LOG_SYSTEM_ERROR(hr, "CreateDDSTextureFromFile");
+		LOG_SYSTEM_ERROR(hr, "CreateFromFile");
 
 		ASSERT(false);
 
@@ -945,7 +1115,10 @@ void Renderer::RemoveMeshComponent(MeshComponent* const pMeshComponent)
 
 	VECTOR_ITER iter = std::find(mMeshComponents.begin(), mMeshComponents.end(), pMeshComponent);
 
-	mMeshComponents.erase(iter);
+	if (iter != mMeshComponents.end())
+	{
+		mMeshComponents.erase(iter);
+	}
 
 #undef VECTOR_ITER
 }

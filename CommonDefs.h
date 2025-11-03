@@ -12,5 +12,6 @@
 
 enum EConstant
 {
-	MAX_LABEL_LENGTH = 128
+	MAX_LABEL_LENGTH = 128,
+	PATH_BUFFER_SIZE = MAX_PATH * 4
 };

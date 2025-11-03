@@ -206,6 +206,11 @@ public:
 		return mMeshMap;
 	}
 
+	inline ID3D11RasterizerState* GetNonCullingState() const
+	{
+		return mpNonCullingState;
+	}
+
 private:
 	static Renderer* spInstance;
 
@@ -224,6 +229,8 @@ private:
 	ID3D11RasterizerState* mpWireframeState;
 	bool mbWireframe;
 
+	ID3D11RasterizerState* mpNonCullingState;
+
 	// ps
 	std::unordered_map<std::string, ID3D11PixelShader*> mPixelShaderMap;
 
@@ -232,6 +239,9 @@ private:
 	ID3D11DepthStencilView* mpDepthStencilViewGPU;
 	ID3D11BlendState* mpBlendState;
 	ID3D11DepthStencilState* mpDepthReadOnlyState;
+
+	ID3D11RenderTargetView* mpMultiSampleRendereTargetViewGPU;
+	ID3D11DepthStencilView* mpMultiSampleDepthStencilViewGPU;
 
 	// resources
 	ID3D11SamplerState* mSamplerStateMap[static_cast<int>(ESamplerType::COUNT)];
@@ -261,6 +271,7 @@ private:
 
 	UINT mTargetFrameRate;
 	bool mbVSync;
+	bool mbAntiAliasing;
 
 	float mClearColor[4];
 

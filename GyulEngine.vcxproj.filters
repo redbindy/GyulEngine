@@ -177,6 +177,15 @@
     <ClInclude Include="Component\LightComponent.h">
       <Filter>Component\.h</Filter>
     </ClInclude>
+    <ClInclude Include="Component\SpriteComponent.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="FileDialog.h">
+      <Filter>Main\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Controller2DComponent.h">
+      <Filter>Component\.h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ThirdParty\DirectXTK\Src\DDSTextureLoader.cpp">
@@ -254,6 +263,15 @@
     <ClCompile Include="Component\LightComponent.cpp">
       <Filter>Component\.cpp</Filter>
     </ClCompile>
+    <ClCompile Include="Component\SpriteComponent.cpp">
+      <Filter>Component\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="FileDialog.cpp">
+      <Filter>Main\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Controller2DComponent.cpp">
+      <Filter>Component\.cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
@@ -269,6 +287,9 @@
       <Filter>Renderer\Shader</Filter>
     </None>
     <None Include="Renderer\Shaders\Common.hlsli">
+      <Filter>Renderer\Shader</Filter>
+    </None>
+    <None Include="Renderer\Shaders\Sprite.hlsli">
       <Filter>Renderer\Shader</Filter>
     </None>
   </ItemGroup>
@@ -289,6 +310,12 @@
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
     <FxCompile Include="Renderer\Shaders\VSBlinPhong.hlsl">
+      <Filter>Renderer\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\PSSprite.hlsl">
+      <Filter>Renderer\Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Renderer\Shaders\VSSprite.hlsl">
       <Filter>Renderer\Shader</Filter>
     </FxCompile>
   </ItemGroup>

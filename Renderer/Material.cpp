@@ -4,6 +4,7 @@
 #include "ComHelper.h"
 #include "Renderer.h"
 #include "StringHelper.h"
+#include "FileDialog.h"
 
 enum
 {
@@ -88,6 +89,31 @@ void Material::DrawUI()
 	else
 	{
 		ImGui::TextDisabled("Texture: %s", mTexturePath.c_str());
+	}
+	ImGui::SameLine();
+
+	if (ImGui::Button("Find Texture"))
+	{
+		char path[PATH_BUFFER_SIZE + 1];
+
+		FileDialog& fileDialog = FileDialog::GetInstance();
+
+		bool bResult = fileDialog.TryOpenFileDialog(path, PATH_BUFFER_SIZE + 1);
+		ASSERT(bResult);
+
+		mTexturePath = path;
+
+		Renderer& renderer = Renderer::GetInstance();
+
+		mpTextureViewGPU = renderer.GetTextureViewOrNull(mTexturePath);
+		if (mpTextureViewGPU == nullptr)
+		{
+			bResult = renderer.TryCreateTextureView(mTexturePath);
+			ASSERT(bResult);
+
+			mpTextureViewGPU = renderer.GetTextureViewOrNull(mTexturePath);
+			ASSERT(mpTextureViewGPU != nullptr);
+		}
 	}
 
 	ImGui::Text("Sampler: %s", GetSamplerTypeString(mSamplerType));

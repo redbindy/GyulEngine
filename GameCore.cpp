@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "Renderer/Renderer.h"
+#include "FileDialog.h"
 #include "Actor.h"
 #include "Component/MeshComponent.h"
 #include "Component/CameraComponent.h"
@@ -90,6 +91,8 @@ GameCore::GameCore(const HINSTANCE hInstance)
 
 		ASSERT(false);
 	}
+
+	FileDialog::CreateInstance(mhWnd);
 }
 
 GameCore::~GameCore()
@@ -100,6 +103,7 @@ GameCore::~GameCore()
 	}
 
 	Renderer::Destroy();
+	FileDialog::Destroy();
 
 	UnregisterClass(CLASS_NAME, mhInstance);
 }

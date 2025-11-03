@@ -7,6 +7,8 @@
 #include "CameraComponent.h"
 #include "CameraControllerComponent.h"
 #include "LightComponent.h"
+#include "SpriteComponent.h"
+#include "Controller2DComponent.h"
 
 #include <cstdint>
 
@@ -20,6 +22,8 @@ namespace ComponentGenerator
 		CAMERA,
 		CAMERA_CONTROLLER,
 		LIGHT,
+		SPRITE,
+		CONTROLLER_2D,
 		COUNT
 	};
 
@@ -32,14 +36,18 @@ namespace ComponentGenerator
 		"Mesh",
 		"Camera",
 		"CameraController",
-		"Light"
+		"Light",
+		"Sprite",
+		"Controller2D"
 	};
 
 	static std::function<Component* (Actor* const)> sConstructors[GetComponentCount()] = {
 		[](Actor* const pActor) { return new MeshComponent(pActor); },
 		[](Actor* const pActor) { return new CameraComponent(pActor); },
 		[](Actor* const pActor) { return new CameraControllerComponent(pActor); },
-		[](Actor* const pActor) { return new LightComponent(pActor); }
+		[](Actor* const pActor) { return new LightComponent(pActor); },
+		[](Actor* const pActor) { return new SpriteComponent(pActor); },
+		[](Actor* const pActor) { return new Controller2DComponent(pActor); }
 	};
 
 	inline const char* GetNameString(const EComponentType type)

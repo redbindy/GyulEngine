@@ -10,9 +10,8 @@ VSBasicOutput main(VSBasicInput input)
     output.pos = mul(pos, wvpMat);
     
     float4 normal = float4(input.normal, 1.f);
-    
-    normal = mul(normal, wvpMat);
     normal = mul(normal, invTransNormal);
+    
     output.normal = normal.xyz;
     
     output.uv = input.uv;

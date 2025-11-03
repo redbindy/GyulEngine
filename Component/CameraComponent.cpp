@@ -13,6 +13,8 @@ CameraComponent::CameraComponent(Actor* const pOwner)
 	, mFarZ(100.f)
 	, mFov(XMConvertToRadians(105.f))
 {
+	ASSERT(pOwner != nullptr);
+
 	Renderer& renderer = Renderer::GetInstance();
 
 	renderer.AddCameraComponent(this);

@@ -99,7 +99,7 @@ float4 main(PSBlinPhongInput input) : SV_TARGET
         }
     }
     
-    const float4 resultColor = float4(saturate(color), 1.f);
+    const float4 resultColor = float4(color, 1.f);
     
     return bUseTexture ? sTexture.Sample(sSamplerState, input.uv) * resultColor : resultColor;
 }

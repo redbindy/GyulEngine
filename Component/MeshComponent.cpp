@@ -8,26 +8,42 @@
 #include "Actor.h"
 #include "StringHelper.h"
 
-MeshComponent::MeshComponent(Actor* const pOwner)
-	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::MESH))
-	, mpMesh(nullptr)
-	, mpMaterial(nullptr)
+MeshComponent::MeshComponent(
+	Actor* const pOwner,
+	const char* label,
+	Mesh* const pMesh,
+	Material* const pMaterial
+)
+	: Component(pOwner, label)
+	, mpMesh(pMesh)
+	, mpMaterial(pMaterial)
 {
+	ASSERT(pOwner != nullptr);
+	ASSERT(label != nullptr);
+	ASSERT(pMesh != nullptr);
+	ASSERT(pMaterial != nullptr);
+
 	Renderer& renderer = Renderer::GetInstance();
-
-	// mpMesh = renderer->GetMeshOrNull("Triangle");
-	mpMesh = renderer.GetMeshOrNull("Cube");
-	// mpMesh = renderer.GetMeshOrNull("Sphere");
-	ASSERT(mpMesh != nullptr);
-
-	// mpMaterial = renderer.GetMaterialOrNull("Basic");
-	mpMaterial = renderer.GetMaterialOrNull("ClassicLighting");
-	ASSERT(mpMaterial != nullptr);
 
 	renderer.AddMeshComponent(this);
 
 	GameCore& gameCore = GameCore::GetInstance();
 	gameCore.RegisterInteraction(pOwner, mpMesh->GetBoundingSphereLocal());
+}
+
+
+MeshComponent::MeshComponent(Actor* const pOwner)
+	: MeshComponent(
+		pOwner,
+		ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::MESH),
+		// Renderer::GetInstance().GetMeshOrNull("Triangle"),
+		Renderer::GetInstance().GetMeshOrNull("Cube"),
+		// Renderer::GetInstance().GetMeshOrNull("Sphere"),
+		// Renderer::GetInstance().GetMaterialOrNull("Basic")
+		Renderer::GetInstance().GetMaterialOrNull("ClassicLighting")
+	)
+{
+	ASSERT(pOwner != nullptr);
 }
 
 MeshComponent::~MeshComponent()

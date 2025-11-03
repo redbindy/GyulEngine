@@ -10,6 +10,8 @@ CameraControllerComponent::CameraControllerComponent(Actor* const pOwner)
 	, mSpeed(3.f)
 	, mMoveKeys{ 'W', 'S', 'A', 'D' }
 {
+	ASSERT(pOwner != nullptr);
+
 	GameCore& gameCore = GameCore::GetInstance();
 
 	mPrevMousePosition = gameCore.GetMousePosition();

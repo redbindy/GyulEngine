@@ -5,7 +5,7 @@
 class Mesh;
 class Material;
 
-class MeshComponent final : public Component
+class MeshComponent : public Component
 {
 public:
 	MeshComponent(Actor* const pOwner);
@@ -16,8 +16,16 @@ public:
 	MeshComponent& operator=(MeshComponent&& other) = delete;
 
 	virtual void Update(const float deltaTime) override;
-	void Draw(ID3D11DeviceContext& deviceContext) const;
+	virtual void Draw(ID3D11DeviceContext& deviceContext) const;
 	virtual void DrawUI() override;
+
+protected:
+	MeshComponent(
+		Actor* const pOwner, 
+		const char* label, 
+		Mesh* const pMesh, 
+		Material* const pMaterial
+	);
 
 private:
 	Mesh* mpMesh;
