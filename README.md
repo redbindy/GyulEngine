@@ -31,6 +31,23 @@
 
 </details>
 
+<details>
+<summary>렌더링</summary>
+
+### 방향광(Directional Light)
+
+![방향광](./gif/방향광.gif)
+
+### 조명(Point, Spot Light)
+
+![조명](./gif/조명.gif)
+
+### 멀티샘플링(Multi-sampling)
+
+![멀티샘플링](./gif/멀티샘플링.gif)
+
+</details>
+
 ## Dependencies
 
 | Library | Description | License |
