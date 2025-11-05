@@ -35,7 +35,7 @@ MeshComponent::MeshComponent(
 MeshComponent::MeshComponent(Actor* const pOwner)
 	: MeshComponent(
 		pOwner,
-		ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::MESH),
+		ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::Mesh),
 		// Renderer::GetInstance().GetMeshOrNull("Triangle"),
 		Renderer::GetInstance().GetMeshOrNull("Cube"),
 		// Renderer::GetInstance().GetMeshOrNull("Sphere"),

@@ -14,16 +14,21 @@
 
 class Actor;
 
+#define COMPONENT_LIST \
+	COMPONENT_ENTRY(Mesh) \
+	COMPONENT_ENTRY(Camera) \
+	COMPONENT_ENTRY(CameraController) \
+	COMPONENT_ENTRY(Light) \
+	COMPONENT_ENTRY(Sprite) \
+	COMPONENT_ENTRY(Controller2D) \
+
 namespace ComponentGenerator
 {
 	enum class EComponentType : uint8_t
 	{
-		MESH = 0,
-		CAMERA,
-		CAMERA_CONTROLLER,
-		LIGHT,
-		SPRITE,
-		CONTROLLER_2D,
+#define COMPONENT_ENTRY(name) name, 
+		COMPONENT_LIST
+#undef COMPONENT_ENTRY
 		COUNT
 	};
 
@@ -33,21 +38,15 @@ namespace ComponentGenerator
 	}
 
 	constexpr const char* const COMPONENT_NAMES[GetComponentCount()] = {
-		"Mesh",
-		"Camera",
-		"CameraController",
-		"Light",
-		"Sprite",
-		"Controller2D"
+#define COMPONENT_ENTRY(name) (#name), 
+		COMPONENT_LIST
+#undef COMPONENT_ENTRY
 	};
 
 	static std::function<Component* (Actor* const)> sConstructors[GetComponentCount()] = {
-		[](Actor* const pActor) { return new MeshComponent(pActor); },
-		[](Actor* const pActor) { return new CameraComponent(pActor); },
-		[](Actor* const pActor) { return new CameraControllerComponent(pActor); },
-		[](Actor* const pActor) { return new LightComponent(pActor); },
-		[](Actor* const pActor) { return new SpriteComponent(pActor); },
-		[](Actor* const pActor) { return new Controller2DComponent(pActor); }
+#define COMPONENT_ENTRY(name) ([](Actor* const pActor) { return new name##Component(pActor); }), 
+		COMPONENT_LIST
+#undef COMPONENT_ENTRY
 	};
 
 	inline const char* GetNameString(const EComponentType type)

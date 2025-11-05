@@ -6,7 +6,7 @@
 #include "Renderer/Renderer.h"
 
 LightComponent::LightComponent(Actor* const pOwner)
-	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::LIGHT))
+	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::Light))
 	, mLight(Renderer::GetInstance().AcquireLightOrNull())
 {
 	ASSERT(pOwner != nullptr);

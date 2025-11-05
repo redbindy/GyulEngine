@@ -6,7 +6,7 @@
 SpriteComponent::SpriteComponent(Actor* const pOwner)
 	: MeshComponent(
 		pOwner,
-		ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::SPRITE),
+		ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::Sprite),
 		Renderer::GetInstance().GetMeshOrNull("Square"),
 		Renderer::GetInstance().GetMaterialOrNull("Sprite")
 	)

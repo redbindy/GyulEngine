@@ -5,7 +5,7 @@
 #include "Actor.h"
 
 Controller2DComponent::Controller2DComponent(Actor* const pOwner)
-	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::CONTROLLER_2D))
+	: Component(pOwner, ComponentGenerator::GetNameString(ComponentGenerator::EComponentType::Controller2D))
 {
 	ASSERT(pOwner != nullptr);
 }
