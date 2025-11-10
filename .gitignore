@@ -7,8 +7,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-ThirdParty/DirectXTKOriginal
-ThirdParty/ImGuiOriginal
+Engine/ThirdParty/DirectXTKOriginal
+Engine/ThirdParty/ImGuiOriginal
 
 # User-specific files
 *.rsuser
