@@ -5,6 +5,8 @@
 #include "Core/ComHelper.h"
 #include "Core/StringHelper.h"
 #include "Core/LogHelper.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
 
 enum
 {
@@ -183,6 +185,39 @@ ID3D11PixelShader* ShaderManager::GetPixelShaderOrNull(const std::string& path) 
 #undef MAP_ITER
 
 	return nullptr;
+}
+
+void ShaderManager::DrawEditorUI()
+{
+	ImGui::PushID("ShaderManager");
+
+	ImGui::Text(UTF8_TEXT("¡§¡° Ω¶¿Ã¥ı"));
+
+#define MAP_ITER std::unordered_map<std::string, ID3D11VertexShader*>::const_iterator
+
+	for (MAP_ITER iter = mVertexShaderMap.cbegin(); iter != mVertexShaderMap.cend(); ++iter)
+	{
+		const std::pair<const std::string, ID3D11VertexShader*>& pair = *iter;
+		ImGui::Text("%s", pair.first.c_str());
+	}
+
+#undef MAP_ITER
+
+	ImGui::Separator();
+
+	ImGui::Text(UTF8_TEXT("«»ºø Ω¶¿Ã¥ı"));
+
+#define MAP_ITER std::unordered_map<std::string, ID3D11PixelShader*>::const_iterator
+
+	for (MAP_ITER iter = mPixelShaderMap.cbegin(); iter != mPixelShaderMap.cend(); ++iter)
+	{
+		const std::pair<const std::string, ID3D11PixelShader*>& pair = *iter;
+		ImGui::Text("%s", pair.first.c_str());
+	}
+
+#undef MAP_ITER
+
+	ImGui::PopID();
 }
 
 void ShaderManager::Initialize(ID3D11Device& device)

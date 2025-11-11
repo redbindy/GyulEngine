@@ -20,24 +20,12 @@ Component::Component(Actor* const pOwner, const char* const label, const uint32_
 	pOwner->AddComponent(this);
 }
 
-Component::Component(const Component& other)
-	: mLabel(other.mLabel)
-	, mbAlive(other.mbAlive)
-	, mUpdateOrder(other.mUpdateOrder)
-	, mpOwner(other.mpOwner)
-{
-
-}
-
-Component& Component::operator=(const Component& other)
+void Component::CloneFrom(const Component& other)
 {
 	if (this != &other)
 	{
 		mLabel = other.mLabel;
 		mbAlive = other.mbAlive;
 		mUpdateOrder = other.mUpdateOrder;
-		mpOwner = other.mpOwner;
 	}
-
-	return *this;
 }

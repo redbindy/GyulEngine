@@ -10,6 +10,10 @@ public:
 
 	virtual void Update(const float deltaTime) override;
 
+	virtual void DrawEditorUI() override;
+
+	virtual void CloneFrom(const Component& other) override;
+
 private:
 
 	// orthographic

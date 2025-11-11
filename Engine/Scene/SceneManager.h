@@ -4,14 +4,17 @@
 #include <string>
 
 #include "Core/Assert.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Scene;
 
-class SceneManager final
+class SceneManager final : IEditorUIDrawable
 {
 public:
 	void CreateScene(const std::string& name);
 	void RemoveScene(Scene* const pScene);
+
+	virtual void DrawEditorUI() override;
 
 	inline Scene* GetScene(const int index) const
 	{
@@ -37,6 +40,7 @@ private:
 	static SceneManager* spInstance;
 
 	std::vector<Scene*> mpScenes;
+	int mSelectedSceneIndex; // currently selected scene index
 
 private:
 	SceneManager();

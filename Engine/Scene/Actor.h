@@ -5,17 +5,17 @@
 
 #include "Core/MathHelper.h"
 #include "Core/CommonDefs.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Component;
 class Scene;
 
-class Actor final
+class Actor final : public IEditorUIDrawable
 {
 public:
 	Actor(Scene* const pScene, const char* const label);
 	~Actor();
 
-	Actor(const Actor& other);
 	Actor& operator=(const Actor& other);
 
 	void Update(const float deltaTime);
@@ -23,6 +23,8 @@ public:
 
 	void AddComponent(Component* const pComponent);
 	void RemoveComponent(Component* const pComponent);
+
+	virtual void DrawEditorUI() override;
 
 	inline const char* GetLabel() const
 	{
@@ -78,10 +80,11 @@ private:
 	Quaternion mRotation;
 
 	// component
-	std::vector<Component*> mComponents;
-	std::vector<Component*> mPendingComponents;
+	std::vector<Component*> mpComponents;
+	std::vector<Component*> mpPendingComponents;
 
 private:
+	Actor(const Actor& other) = delete;
 	Actor(Actor&& other) = delete;
 	Actor& operator=(Actor&& other) = delete;
 };

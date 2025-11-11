@@ -4,6 +4,10 @@
 
 #include "Core/MathHelper.h"
 
+#define VERTEX_LIST \
+	VERTEX_ENTRY(POS_UV, PosUV) \
+	VERTEX_ENTRY(POS_NORMAL_UV, PosNormalUV) \
+
 namespace Vertex
 {
 	struct PosUV
@@ -21,19 +25,33 @@ namespace Vertex
 
 	enum class EType : uint8_t
 	{
-		POS_UV,
-		POS_NORMAL_UV,
+#define VERTEX_ENTRY(type, name) type,
+		VERTEX_LIST
+#undef VERTEX_ENTRY
+
 		COUNT
 	};
-
-	consteval int GetTypeInt(const EType type)
-	{
-		return static_cast<int>(type);
-	}
 
 	consteval int GetVertexTypeCount()
 	{
 		return static_cast<int>(EType::COUNT);
+	}
+
+	constexpr int GetTypeInt(const EType type)
+	{
+		return static_cast<int>(type);
+	}
+
+	constexpr const char* const GetTypeName(const EType type)
+	{
+		constexpr const char* const names[] =
+		{
+		#define VERTEX_ENTRY(type, name) #type,
+			VERTEX_LIST
+		#undef VERTEX_ENTRY
+		};
+
+		return names[GetTypeInt(type)];
 	}
 
 	constexpr std::vector<D3D11_INPUT_ELEMENT_DESC> GetInputLayoutDescs(const EType type)

@@ -8,11 +8,12 @@
 #include "Core/Assert.h"
 #include "Core/MathHelper.h"
 #include "PipelineStateType.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Mesh;
 class Material;
 
-class Renderer final
+class Renderer final : public IEditorUIDrawable
 {
 public:
 	enum ConstantBufferSlot
@@ -41,6 +42,8 @@ public:
 
 	void OnResize(const int width, const int height);
 	void UpdateCBFrame(const Vector3& cameraPos, const Matrix& viewProj);
+
+	virtual void DrawEditorUI() override;
 
 	UINT GetRefreshRate() const
 	{

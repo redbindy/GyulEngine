@@ -14,6 +14,8 @@ class ComponentFactory final
 public:
 	Component* CreateComponentAlloc(const std::string& typeName, Actor* const pOwner);
 
+	void DrawAddComponentUI(Actor* const pActor);
+
 	static void Initialize();
 
 	static ComponentFactory& GetInstance()
@@ -33,6 +35,9 @@ private:
 
 	using ComponentConstructor = std::function<Component* (Actor* const)>;
 	std::unordered_map<std::string, ComponentConstructor> mComponentConstructors;
+
+	// ui
+	int mSelectedComponentIndex;
 
 private:
 	ComponentFactory();

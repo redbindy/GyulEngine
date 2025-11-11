@@ -7,10 +7,11 @@
 #include "Core/ComHelper.h"
 #include "Core/MathHelper.h"
 #include "Renderer/PipelineStateType.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Texture;
 
-class Material final
+class Material final : public IEditorUIDrawable
 {
 public:
 	struct CBMaterial
@@ -39,10 +40,14 @@ public:
 
 	void Bind(ID3D11DeviceContext& deviceContext) const;
 
+	virtual void DrawEditorUI() override;
+
 private:
+	CBMaterial mMaterialData;
+
 	std::string mPath;
 
-	std::string mTexturePaths;
+	std::string mTexturePath;
 
 	ComPtr<ID3D11Buffer> mpMaterialBufferGPU;
 

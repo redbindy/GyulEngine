@@ -6,6 +6,8 @@
 #include "Texture.h"
 #include "Core/StringHelper.h"
 #include "Core/LogHelper.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
 
 enum
 {
@@ -120,6 +122,33 @@ void TextureManager::UnloadTexture(const std::string& path)
 	}
 
 #undef MAP_ITER
+}
+
+void TextureManager::DrawEditorUI()
+{
+	ImGui::PushID("TextureManager");
+
+	ImGui::Text(UTF8_TEXT("텍스처 목록"));
+
+#define MAP_ITER std::unordered_map<std::string, Texture*>::const_iterator
+
+	for (MAP_ITER iter = mTextureMap.cbegin(); iter != mTextureMap.cend(); ++iter)
+	{
+		const std::pair<const std::string, Texture*>& pair = *iter;
+
+		Texture* const pTexture = pair.second;
+		ASSERT(pTexture != nullptr);
+
+		const char* path = pTexture->GetPath();
+		const int width = pTexture->GetWidth();
+		const int height = pTexture->GetHeight();
+
+		ImGui::Text("%s (%d x %d)", path, width, height);
+	}
+
+#undef MAP_ITER
+
+	ImGui::PopID();
 }
 
 void TextureManager::Initialize(ID3D11Device& device)

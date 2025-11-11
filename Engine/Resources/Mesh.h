@@ -7,8 +7,9 @@
 #include "Core/ComHelper.h"
 #include "Core/Assert.h"
 #include "Renderer/Vertex.h"
+#include "UI/IEditorUIDrawable.h"
 
-class Mesh final
+class Mesh final : public IEditorUIDrawable
 {
 public:
 	Mesh(
@@ -25,6 +26,8 @@ public:
 	~Mesh() = default;
 
 	void Bind(ID3D11DeviceContext& deviceContext) const;
+
+	virtual void DrawEditorUI() override;
 
 	inline const char* GetPath() const
 	{

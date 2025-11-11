@@ -12,6 +12,8 @@
 #include "Resources/Mesh.h"
 #include "Resources/Material.h"
 
+#include "Core/CommonDefs.h"
+
 enum
 {
 	DEFAULT_COMMAND_QUEUE_SIZE = 256
@@ -971,4 +973,20 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	}
 
 	return true;
+}
+
+void Renderer::DrawEditorUI()
+{
+	ImGui::PushID("Renderer");
+
+	// VSync toggle
+	ImGui::Checkbox(UTF8_TEXT("수직동기화"), &mbVSync);
+
+	// Multisampling toggle
+	ImGui::Checkbox(UTF8_TEXT("멀티샘플링"), &mbMultiSampling);
+
+	// Clear color
+	ImGui::SliderFloat4(UTF8_TEXT("화면 초기화 색상"), mClearColor, 0.f, 1.f);
+
+	ImGui::PopID();
 }

@@ -5,6 +5,8 @@
 #include "Texture.h"
 #include "ShaderManager.h"
 #include "Renderer/Renderer.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
 
 Material::Material(
 	const std::string& path,
@@ -13,7 +15,9 @@ Material::Material(
 	const std::string& pixelShaderPath,
 	ComPtr<ID3D11Buffer>& pMaterialBufferGPU
 )
-	: mTexturePaths(texturePath)
+	: mMaterialData{}
+	, mPath(path)
+	, mTexturePath(texturePath)
 	, mVertexShaderPath(vertexShaderPath)
 	, mPixelShaderPath(pixelShaderPath)
 	, mpMaterialBufferGPU(pMaterialBufferGPU)
@@ -29,7 +33,7 @@ void Material::Bind(ID3D11DeviceContext& deviceContext) const
 {
 	TextureManager& textureManager = TextureManager::GetInstance();
 
-	Texture* const pTexture = textureManager.GetTextureOrNull(mTexturePaths);
+	Texture* const pTexture = textureManager.GetTextureOrNull(mTexturePath);
 	ASSERT(pTexture != nullptr);
 
 	pTexture->Bind(deviceContext);
@@ -45,6 +49,15 @@ void Material::Bind(ID3D11DeviceContext& deviceContext) const
 	ASSERT(pPS != nullptr);
 
 	deviceContext.PSSetShader(pPS, nullptr, 0);
+
+	deviceContext.UpdateSubresource(
+		mpMaterialBufferGPU.Get(),
+		0,
+		nullptr,
+		&mMaterialData,
+		0,
+		0
+	);
 
 	deviceContext.PSSetConstantBuffers(
 		Renderer::ConstantBufferSlot::CB_MATERIAL_SLOT,
@@ -63,4 +76,27 @@ void Material::Bind(ID3D11DeviceContext& deviceContext) const
 	deviceContext.PSSetSamplers(0, 1, samplerStates);
 	deviceContext.OMSetBlendState(renderer.GetBlendState(mBlendStateType), nullptr, 0xFFFFFFFF);
 	deviceContext.OMSetDepthStencilState(renderer.GetDepthStencilState(mDepthStencilType), 0);
+}
+
+void Material::DrawEditorUI()
+{
+	ImGui::SeparatorText(UTF8_TEXT("머터리얼"));
+
+	ImGui::Checkbox(UTF8_TEXT("텍스처 사용"), &mMaterialData.bUseTexture);
+
+	ImGui::SliderFloat3(UTF8_TEXT("Ambient"), reinterpret_cast<float*>(&mMaterialData.ambientColor), 0.f, 1.f, "%.2f");
+	ImGui::SliderFloat3(UTF8_TEXT("Diffuse"), reinterpret_cast<float*>(&mMaterialData.diffuseColor), 0.f, 1.f, "%.2f");
+	ImGui::SliderFloat3(UTF8_TEXT("Specular"), reinterpret_cast<float*>(&mMaterialData.specularColor), 0.f, 1.f, "%.2f");
+	ImGui::SliderFloat(UTF8_TEXT("Shininess"), &mMaterialData.shininess, 1.f, 256.f, "%.1f");
+
+	ImGui::Text("Path: %s", mPath.c_str());
+	ImGui::Text("Texture: %s", mTexturePath.c_str());
+
+	ImGui::Text("VertexShader: %s", mVertexShaderPath.c_str());
+	ImGui::Text("PixelShader: %s", mPixelShaderPath.c_str());
+
+	ImGui::Text("Rasterizer: %s", GetRasterizerTypeName(mRasterizerType));
+	ImGui::Text("Sampler: %s", GetSamplerTypeName(mSamplerType));
+	ImGui::Text("Blend State: %s", GetBlendTypeName(mBlendStateType));
+	ImGui::Text("Depth Stencil: %s", GetDepthStencilTypeName(mDepthStencilType));
 }

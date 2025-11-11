@@ -7,6 +7,9 @@
 
 #include "../Actor.h"
 #include "../Scene.h"
+#include "UI/ImGuiHeaders.h"
+#include "Resources/Mesh.h"
+#include "Resources/Material.h"
 
 MeshComponent::MeshComponent(Actor* const pOwner, const char* const label, const uint32_t updateOrder)
 	: Component(pOwner, label, updateOrder)
@@ -16,6 +19,15 @@ MeshComponent::MeshComponent(Actor* const pOwner, const char* const label, const
 	Scene& scene = pOwner->GetScene();
 
 	scene.AddMeshComponent(this);
+}
+
+MeshComponent::~MeshComponent()
+{
+	Actor& owner = GetOwner();
+
+	Scene& scene = owner.GetScene();
+
+	scene.RemoveMeshComponent(this);
 }
 
 void MeshComponent::Update(const float deltaTime)
@@ -39,3 +51,30 @@ void MeshComponent::RequestRender() const
 
 	renderer.EnqueueRenderCommand(renderCommand);
 }
+
+void MeshComponent::DrawEditorUI()
+{
+	if (ImGui::TreeNodeEx(GetLabel(), ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		mpMesh->DrawEditorUI();
+		mpMaterial->DrawEditorUI();
+
+		ImGui::TreePop();
+	}
+}
+
+void MeshComponent::CloneFrom(const Component& other)
+{
+	ASSERT(strcmp(GetLabel(), other.GetLabel()) == 0);
+
+	if (this != &other)
+	{
+		Component::CloneFrom(other);
+
+		const MeshComponent& otherMeshComp = static_cast<const MeshComponent&>(other);
+
+		mpMesh = otherMeshComp.mpMesh;
+		mpMaterial = otherMeshComp.mpMaterial;
+	}
+}
+

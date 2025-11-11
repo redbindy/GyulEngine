@@ -9,11 +9,15 @@ class MeshComponent final : public Component
 {
 public:
 	MeshComponent(Actor* const pOwner, const char* const label, const uint32_t updateOrder = 10u);
-	virtual ~MeshComponent() = default;
+	virtual ~MeshComponent();
 
 	virtual void Update(const float deltaTime) override;
 
 	void RequestRender() const;
+
+	virtual void DrawEditorUI() override;
+
+	virtual void CloneFrom(const Component& other) override;
 
 private:
 	Mesh* mpMesh;

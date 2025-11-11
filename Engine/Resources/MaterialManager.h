@@ -6,10 +6,11 @@
 #include <d3d11.h>
 
 #include "Core/Assert.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Material;
 
-class MaterialManager final
+class MaterialManager final : public IEditorUIDrawable
 {
 public:
 	Material* CreateMaterial(
@@ -20,6 +21,8 @@ public:
 	);
 	Material* GetMaterialOrNull(const std::string& path) const;
 	void UnloadMaterial(const std::string& path);
+
+	virtual void DrawEditorUI() override;
 
 	// static
 	static void Initialize(ID3D11Device& device);

@@ -1,6 +1,8 @@
 #include "Mesh.h"
 
 #include "ShaderManager.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
 
 Mesh::Mesh(
 	const std::string& path,
@@ -50,4 +52,28 @@ void Mesh::Bind(ID3D11DeviceContext& deviceContext) const
 	}
 
 	deviceContext.IASetPrimitiveTopology(mPrimitiveTopology);
+}
+
+void Mesh::DrawEditorUI()
+{
+	ImGui::SeparatorText(UTF8_TEXT("¸Þ½¬"));
+
+	ImGui::Text("Path: %s", mPath.c_str());
+	ImGui::Text("Vertex Type: %s", Vertex::GetTypeName(mVertexType));
+	ImGui::Text("Vertex Count: %u", mVertexCount);
+	ImGui::Text("Index Count: %u", mIndexCount);
+
+	const char* topologyName = "Unknown";
+	switch (mPrimitiveTopology)
+	{
+	case D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST:
+		topologyName = "Triangle List";
+		break;
+
+	default:
+		ASSERT(false);
+		break;
+	}
+
+	ImGui::Text("Topology: %s", topologyName);
 }

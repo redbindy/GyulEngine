@@ -3,10 +3,12 @@
 #include <vector>
 #include <string>
 
+#include "UI/IEditorUIDrawable.h"
+
 class Actor;
 class MeshComponent;
 
-class Scene final
+class Scene final : public IEditorUIDrawable
 {
 public:
 	Scene(const std::string& name);
@@ -21,15 +23,21 @@ public:
 	void AddMeshComponent(MeshComponent* const pMeshComponent);
 	void RemoveMeshComponent(MeshComponent* const pMeshComponent);
 
+	virtual void DrawEditorUI() override;
+
 private:
 	std::string mSceneName;
 
 	std::vector<Actor*> mpActorOriginals;
 	std::vector<Actor*> mpPlayActors;
+	std::vector<Actor*> mpPendingActors;
 
 	std::vector<MeshComponent*> mpMeshComponents;
+	std::vector<MeshComponent*> mpPendingMeshComponents;
 
 	bool mbPlaying;
+
+	int mNextActorId; // for generating unique actor names
 
 private:
 	Scene(const Scene& other) = delete;

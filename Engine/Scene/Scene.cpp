@@ -4,20 +4,27 @@
 #include "Core/Assert.h"
 #include "Components/MeshComponent.h"
 #include "Components/ComponentFactory.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
 
 enum
 {
-	DEFAULT_ACTOR_ORIGINALS_SIZE = 32
+	DEFAULT_ACTOR_BUFFER_SIZE = 32
 };
 
 Scene::Scene(const std::string& name)
 	: mSceneName(name)
 	, mpActorOriginals()
 	, mpPlayActors()
+	, mpPendingActors()
+	, mpMeshComponents()
 	, mbPlaying(false)
+	, mNextActorId(0)
 {
-	mpActorOriginals.reserve(DEFAULT_ACTOR_ORIGINALS_SIZE);
-	mpPlayActors.reserve(DEFAULT_ACTOR_ORIGINALS_SIZE);
+	mpActorOriginals.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
+	mpPlayActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
+	mpPendingActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
+	mpMeshComponents.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
 
 	Actor* const pActor = new Actor(this, "DefaultActor");
 
@@ -63,11 +70,15 @@ void Scene::Render()
 
 void Scene::EnterPlayMode()
 {
-	bool mbPlaying = true;
+	mbPlaying = true;
+
+	mpMeshComponents.swap(mpPendingMeshComponents);
 
 	for (Actor* const pActorOriginal : mpActorOriginals)
 	{
-		Actor* const pPlayActor = new Actor(*pActorOriginal);
+		Actor* const pPlayActor = new Actor(this, pActorOriginal->GetLabel());
+
+		*pPlayActor = *pActorOriginal;
 
 		mpPlayActors.push_back(pPlayActor);
 	}
@@ -76,6 +87,9 @@ void Scene::EnterPlayMode()
 void Scene::ExitPlayMode()
 {
 	mbPlaying = false;
+
+	mpMeshComponents.swap(mpPendingMeshComponents);
+	mpPendingMeshComponents.clear();
 
 	for (Actor* const pPlayActor : mpPlayActors)
 	{
@@ -105,5 +119,52 @@ void Scene::RemoveMeshComponent(MeshComponent* const pMeshComponent)
 	}
 
 #undef VECTOR_ITER
+}
+
+void Scene::DrawEditorUI()
+{
+	ImGui::PushID(mSceneName.c_str());
+
+	if (ImGui::Begin(mSceneName.c_str()))
+	{
+		// Add Actor button
+		if (ImGui::Button(UTF8_TEXT("액터 추가")))
+		{
+			// generate unique name
+			char nameBuf[MAX_LABEL_LENGTH];
+			sprintf(nameBuf, "Actor%d", mNextActorId++);
+
+			Actor* const pNewActor = new Actor(this, nameBuf);
+			mpActorOriginals.push_back(pNewActor);
+		}
+
+		ImGui::Separator();
+
+		for (int i = 0; i < mpActorOriginals.size(); ++i)
+		{
+			ImGui::PushID(i);
+
+			Actor* const pActor = mpActorOriginals[i];
+
+			if (ImGui::Button(UTF8_TEXT("액터 삭제")))
+			{
+				delete pActor;
+			}
+			else
+			{
+				mpPendingActors.push_back(pActor);
+
+				pActor->DrawEditorUI();
+			}
+
+			ImGui::PopID();
+		}
+
+		mpActorOriginals.swap(mpPendingActors);
+		mpPendingActors.clear();
+	}
+	ImGui::End();
+
+	ImGui::PopID();
 }
 

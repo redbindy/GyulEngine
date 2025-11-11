@@ -3,6 +3,7 @@
 #include "Core/InputSystem.h"
 #include "../Actor.h"
 #include "Renderer/Renderer.h"
+#include "UI/ImGuiHeaders.h"
 
 CameraControllerComponent::CameraControllerComponent(Actor* const pOwner, const char* const label, const uint32_t updateOrder)
 	: Component(pOwner, label, updateOrder)
@@ -18,18 +19,22 @@ void CameraControllerComponent::Update(const float deltaTime)
 	InputSystem& inputSystem = InputSystem::GetInstance();
 	Actor& owner = GetOwner();
 
-	Vector3 nextPos = owner.GetPosition();
-
 	const Quaternion ownerRotation = owner.GetRotation();
 	const Vector3 eulerRotation = ownerRotation.ToEuler();
 
-	const Quaternion yawPitch = Quaternion::CreateFromYawPitchRoll(eulerRotation.y, eulerRotation.x, 0.f);
+	const Quaternion yawQuat = Quaternion::CreateFromAxisAngle(Vector3::UnitY, eulerRotation.y);
 
-	const Vector3 front = Vector3::Transform(Vector3::UnitZ, yawPitch);
-	const Vector3 up = Vector3::Transform(Vector3::UnitY, yawPitch);
+	Vector3 front = Vector3::Transform(Vector3::UnitZ, yawQuat);
 
-	Vector3 right = up.Cross(front);
+	Vector3 right = Vector3::UnitY.Cross(front);
 	right.Normalize();
+
+	const Quaternion pitchQuat = Quaternion::CreateFromAxisAngle(right, eulerRotation.x);
+
+	front = Vector3::Transform(front, pitchQuat);
+	const Vector3 up = Vector3::Transform(Vector3::UnitY, pitchQuat);
+
+	Vector3 nextPos = owner.GetPosition();
 
 	if (inputSystem.IsKeyPressed('W'))
 	{
@@ -71,7 +76,7 @@ void CameraControllerComponent::Update(const float deltaTime)
 
 		Vector3 resultEuler = eulerRotation + Vector3(deltaRadian.y, deltaRadian.x, 0.f);
 
-		constexpr float MAX_YAW = XMConvertToRadians(89.f);
+		constexpr float MAX_YAW = XMConvertToRadians(359.f);
 		constexpr float MAX_PITCH = XMConvertToRadians(89.f);
 		constexpr Vector3 MAX_VECTOR = Vector3(MAX_PITCH, MAX_YAW, 0.f);
 
@@ -80,5 +85,28 @@ void CameraControllerComponent::Update(const float deltaTime)
 		const Quaternion resultRotation = Quaternion::CreateFromYawPitchRoll(resultEuler);
 
 		owner.SetRotation(resultRotation);
+	}
+}
+
+void CameraControllerComponent::DrawEditorUI()
+{
+	if (ImGui::TreeNodeEx(GetLabel(), ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::DragFloat(UTF8_TEXT("이동 속도"), &mMoveSpeed, 0.1f, 0.1f, 100.f, "%.1f", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::TreePop();
+	}
+}
+
+void CameraControllerComponent::CloneFrom(const Component& other)
+{
+	ASSERT(strcmp(GetLabel(), other.GetLabel()) == 0);
+
+	if (this != &other)
+	{
+		Component::CloneFrom(other);
+
+		const CameraControllerComponent& otherCameraController = static_cast<const CameraControllerComponent&>(other);
+
+		mMoveSpeed = otherCameraController.mMoveSpeed;
 	}
 }

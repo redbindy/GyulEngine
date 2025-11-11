@@ -1,8 +1,10 @@
 #include "MeshManager.h"
 
 #include "Mesh.h"
-#include "Core/LogHelper.h"
 #include "Shape.h"
+#include "Core/LogHelper.h"
+#include "Core/CommonDefs.h"
+#include "UI/ImGuiHeaders.h"
 
 enum
 {
@@ -130,6 +132,25 @@ void MeshManager::UnloadMesh(const std::string& path)
 
 		mMeshMap.erase(iter);
 	}
+
+#undef MAP_ITER
+}
+
+void MeshManager::DrawEditorUI()
+{
+	ImGui::PushID("MeshManager");
+
+	ImGui::Text(UTF8_TEXT("메쉬 목록"));
+
+#define MAP_ITER std::unordered_map<std::string, Mesh*>::const_iterator
+
+	for (MAP_ITER iter = mMeshMap.cbegin(); iter != mMeshMap.cend(); ++iter)
+	{
+		const std::pair<const std::string, Mesh*>& pair = *iter;
+		ImGui::Text("%s", pair.first.c_str());
+	}
+
+	ImGui::PopID();
 
 #undef MAP_ITER
 }

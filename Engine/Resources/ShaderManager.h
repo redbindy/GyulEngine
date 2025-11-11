@@ -6,6 +6,7 @@
 
 #include "Core/Assert.h"
 #include "Renderer/Vertex.h"
+#include "UI/IEditorUIDrawable.h"
 
 #define SHADER_LIST \
 	SHADER_ENTRY(VERTEX, "vs_5_0") \
@@ -13,7 +14,7 @@
 
 #define SHADER_PATH(filename) ("./Shaders/" filename)
 
-class ShaderManager final
+class ShaderManager final : public IEditorUIDrawable
 {
 public:
 	void LoadVertexShaderAndInputLayout(const std::string& path, const Vertex::EType eType);
@@ -22,6 +23,8 @@ public:
 
 	void LoadPixelShader(const std::string& path);
 	ID3D11PixelShader* GetPixelShaderOrNull(const std::string& path) const;
+
+	virtual void DrawEditorUI() override;
 
 	// static
 	static void Initialize(ID3D11Device& device);

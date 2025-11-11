@@ -5,17 +5,27 @@
 #include <memory>
 
 #include "Assert.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Scene;
 class Actor;
 
-class GameCore final
+class GameCore final : public IEditorUIDrawable
 {
 	friend LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	friend LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 public:
-	int Run() const;
+	int Run();
+
+	virtual void DrawEditorUI() override;
+
+	inline void SetCurrentScene(Scene* const pScene)
+	{
+		ASSERT(pScene != nullptr);
+
+		mpCurrentScene = pScene;
+	}
 
 	// static
 	static bool TryInitialize(const HINSTANCE hInstance, const int nShowCmd);
@@ -45,6 +55,9 @@ private:
 	Scene* mpCurrentScene;
 
 	std::unique_ptr<Actor> mpEditorCameraActor;
+
+	bool mbShowResources; // whether resource window is visible
+	bool mbShowSettingsPopup; // whether settings popup is visible
 
 private:
 	GameCore(const HINSTANCE hInstance, const HWND hWnd, const UINT targetFrmaeRate);

@@ -5,15 +5,18 @@
 #include <d3d11.h>
 
 #include "Core/Assert.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Texture;
 
-class TextureManager final
+class TextureManager final : public IEditorUIDrawable
 {
 public:
 	void LoadTexture(const std::string& path);
 	Texture* GetTextureOrNull(const std::string& path) const;
 	void UnloadTexture(const std::string& path);
+
+	virtual void DrawEditorUI() override;
 
 	// static
 	static void Initialize(ID3D11Device& device);

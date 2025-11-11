@@ -2,6 +2,8 @@
 
 #include "Material.h"
 #include "Core/LogHelper.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
 
 enum
 {
@@ -112,6 +114,25 @@ void MaterialManager::UnloadMaterial(const std::string& path)
 	}
 
 #undef MAP_ITER
+}
+
+void MaterialManager::DrawEditorUI()
+{
+	ImGui::PushID("MaterialManager");
+
+	ImGui::Text(UTF8_TEXT("머티리얼 목록"));
+
+#define MAP_ITER std::unordered_map<std::string, Material*>::const_iterator
+
+	for (MAP_ITER iter = mMaterialMap.cbegin(); iter != mMaterialMap.cend(); ++iter)
+	{
+		const std::pair<const std::string, Material*>& pair = *iter;
+		ImGui::Text("%s", pair.first.c_str());
+	}
+
+#undef MAP_ITER
+
+	ImGui::PopID();
 }
 
 void MaterialManager::Initialize(ID3D11Device& device)

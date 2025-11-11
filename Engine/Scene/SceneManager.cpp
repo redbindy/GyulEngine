@@ -3,6 +3,9 @@
 #include "Scene.h"
 #include "Core/Assert.h"
 #include "Components/ComponentFactory.h"
+#include "UI/ImGuiHeaders.h"
+#include "Core/CommonDefs.h"
+#include "Core/GameCore.h" // for setting current scene
 
 enum
 {
@@ -13,6 +16,7 @@ SceneManager* SceneManager::spInstance = nullptr;
 
 SceneManager::SceneManager()
 	: mpScenes()
+	, mSelectedSceneIndex(0)
 {
 	mpScenes.reserve(DEFAULT_SCENE_CAPACITY);
 
@@ -51,6 +55,32 @@ void SceneManager::RemoveScene(Scene* const pScene)
 	}
 
 #undef VECTOR_ITER
+}
+
+void SceneManager::DrawEditorUI()
+{
+	ImGui::PushID("SceneManager");
+
+	// 단순한 씬 목록 표시 및 선택
+	// 현재 선택된 씬은 라디오 버튼처럼 표시
+	for (int i = 0; i < static_cast<int>(mpScenes.size()); ++i)
+	{
+		ImGui::PushID(i);
+
+		bool selected = (i == mSelectedSceneIndex);
+		if (ImGui::Selectable(UTF8_TEXT("씬"), selected))
+		{
+			mSelectedSceneIndex = i;
+			GameCore::GetInstance().SetCurrentScene(mpScenes[mSelectedSceneIndex]);
+		}
+
+		ImGui::SameLine();
+		ImGui::Text("%d", i); // index 표시 (숫자는 그대로)
+
+		ImGui::PopID();
+	}
+
+	ImGui::PopID();
 }
 
 void SceneManager::Initialize()

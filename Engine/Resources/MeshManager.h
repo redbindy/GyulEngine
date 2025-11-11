@@ -7,10 +7,11 @@
 
 #include "Core/Assert.h"
 #include "Renderer/Vertex.h"
+#include "UI/IEditorUIDrawable.h"
 
 class Mesh;
 
-class MeshManager final
+class MeshManager final : public IEditorUIDrawable
 {
 public:
 	Mesh* CreateMesh(
@@ -27,6 +28,8 @@ public:
 
 	Mesh* GetMeshOrNull(const std::string& path) const;
 	void UnloadMesh(const std::string& path);
+
+	virtual void DrawEditorUI() override;
 
 	// static
 	static void Initialize(ID3D11Device& device);

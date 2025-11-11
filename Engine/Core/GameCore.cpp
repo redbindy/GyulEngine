@@ -12,6 +12,11 @@
 #include "Scene/Components/ComponentFactory.h"
 #include "InputSystem.h"
 
+#include "Resources/MeshManager.h"
+#include "Resources/MaterialManager.h"
+#include "Resources/ShaderManager.h"
+#include "Resources/TextureManager.h"
+
 enum
 {
 	DEFAULT_BUFFER_SIZE = 8
@@ -31,6 +36,8 @@ GameCore::GameCore(const HINSTANCE hInstance, const HWND hWnd, const UINT target
 	, mTargetFrameRate(targetFrameRate)
 	, mpCurrentScene(nullptr)
 	, mpEditorCameraActor(nullptr)
+	, mbShowResources(true)
+	, mbShowSettingsPopup(false)
 {
 	ASSERT(hInstance != nullptr);
 	ASSERT(hWnd != nullptr);
@@ -46,7 +53,7 @@ GameCore::~GameCore()
 	UnregisterClass(CLASS_NAME, mhInstance);
 }
 
-int GameCore::Run() const
+int GameCore::Run()
 {
 	LARGE_INTEGER freq;
 	QueryPerformanceFrequency(&freq);
@@ -119,17 +126,149 @@ int GameCore::Run() const
 
 				renderer.Render();
 
-				renderer.BeginUIFrame();
+				if (!mbPlaying)
 				{
-					ImGui::ShowDemoWindow();
+					renderer.BeginUIFrame();
+
+					// Global editor UI
+					DrawEditorUI();
+
+					mpEditorCameraActor->DrawEditorUI();
+
+					if (mpCurrentScene != nullptr)
+					{
+						mpCurrentScene->DrawEditorUI();
+					}
+
+					renderer.EndUIFrame();
 				}
-				renderer.EndUIFrame();
 			}
 			renderer.EndFrame();
 		}
 	}
 
 	return (int)msg.wParam;
+}
+
+void GameCore::DrawEditorUI()
+{
+	// Use class name as ID scope
+	ImGui::PushID("GameCore");
+
+	// Main menu bar with File -> Exit (localized)
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu(UTF8_TEXT("파일")))
+		{
+			if (ImGui::MenuItem(UTF8_TEXT("종료"), "Alt+F4"))
+			{
+				PostQuitMessage(0);
+			}
+			ImGui::EndMenu();
+		}
+
+		// 보기 메뉴: 리소스 창 토글
+		if (ImGui::BeginMenu(UTF8_TEXT("보기")))
+		{
+			ImGui::MenuItem(UTF8_TEXT("리소스 창"), nullptr, &mbShowResources);
+			ImGui::EndMenu();
+		}
+
+		ImGui::EndMainMenuBar();
+	}
+
+	// FPS overlay (localized labels, keep window ID string for stability)
+	{
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x + 10.f, vp->WorkPos.y + 10.f), ImGuiCond_Always);
+		ImGui::SetNextWindowBgAlpha(0.35f);
+		ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
+			ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+		if (ImGui::Begin(UTF8_TEXT("FPS"), nullptr, flags))
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			ImGui::Text("FPS: %.1f", io.Framerate); // Keep acronym as-is
+		}
+		ImGui::End();
+	}
+
+	// 하단 리소스 탭 영역 - 우선 씬 매니저 탭만 구현
+	if (mbShowResources)
+	{
+		const ImGuiViewport* vp = ImGui::GetMainViewport();
+		const float resourceHeight = 180.f; // 기본 높이
+		ImGui::SetNextWindowPos(ImVec2(vp->WorkPos.x, vp->WorkPos.y + vp->WorkSize.y - resourceHeight), ImGuiCond_Always);
+		ImGui::SetNextWindowSize(ImVec2(vp->WorkSize.x, resourceHeight));
+
+		ImGuiWindowFlags winFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus;
+		if (ImGui::Begin(UTF8_TEXT("리소스"), nullptr, winFlags))
+		{
+			if (ImGui::BeginTabBar("ResourceTabs"))
+			{
+				if (ImGui::BeginTabItem(UTF8_TEXT("씬")))
+				{
+					SceneManager::GetInstance().DrawEditorUI();
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem(UTF8_TEXT("메쉬")))
+				{
+					MeshManager::GetInstance().DrawEditorUI();
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem(UTF8_TEXT("머티리얼")))
+				{
+					MaterialManager::GetInstance().DrawEditorUI();
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem(UTF8_TEXT("셰이더")))
+				{
+					ShaderManager::GetInstance().DrawEditorUI();
+					ImGui::EndTabItem();
+				}
+
+				if (ImGui::BeginTabItem(UTF8_TEXT("텍스처")))
+				{
+					TextureManager::GetInstance().DrawEditorUI();
+					ImGui::EndTabItem();
+				}
+
+				ImGui::EndTabBar();
+			}
+		}
+		ImGui::End();
+	}
+
+	const char* const settingsId = UTF8_TEXT("설정");
+	if (mbShowSettingsPopup)
+	{
+		ImGui::OpenPopup(settingsId, ImGuiPopupFlags_NoReopen);
+	}
+	else
+	{
+		ImGui::CloseCurrentPopup();
+	}
+
+	if (ImGui::BeginPopupModal(settingsId, &mbShowSettingsPopup, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		Renderer& renderer = Renderer::GetInstance();
+
+		// GameCore target frame rate slider
+		int frameRate = static_cast<int>(mTargetFrameRate);
+		if (ImGui::SliderInt(UTF8_TEXT("목표 프레임레이트"), &frameRate, 30, renderer.GetRefreshRate()))
+		{
+			mTargetFrameRate = static_cast<UINT>(frameRate);
+		}
+
+		// Renderer settings
+		renderer.DrawEditorUI();
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::PopID();
 }
 
 bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
@@ -258,9 +397,32 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 
 	case WM_KEYDOWN:
 		{
-			InputSystem& inputSystem = InputSystem::GetInstance();
+			switch (wParam)
+			{
+			case VK_ESCAPE:
+				mbShowSettingsPopup = !mbShowSettingsPopup;
+				break;
 
-			inputSystem.OnKeyDown(static_cast<uint8_t>(wParam));
+			case VK_F5:
+				mbPlaying = !mbPlaying;
+				if (mbPlaying)
+				{
+					mpCurrentScene->EnterPlayMode();
+				}
+				else
+				{
+					mpCurrentScene->ExitPlayMode();
+				}
+				break;
+
+			default:
+				{
+					InputSystem& inputSystem = InputSystem::GetInstance();
+
+					inputSystem.OnKeyDown(static_cast<uint8_t>(wParam));
+				}
+				break;
+			}
 		}
 		break;
 
