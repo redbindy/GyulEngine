@@ -16,6 +16,7 @@
 #include "Resources/MaterialManager.h"
 #include "Resources/ShaderManager.h"
 #include "Resources/TextureManager.h"
+#include "InteractionSystem.h"
 
 enum
 {
@@ -36,6 +37,7 @@ GameCore::GameCore(const HINSTANCE hInstance, const HWND hWnd, const UINT target
 	, mTargetFrameRate(targetFrameRate)
 	, mpCurrentScene(nullptr)
 	, mpEditorCameraActor(nullptr)
+	, mpEditorCameraComponent(nullptr)
 	, mbShowResources(true)
 	, mbShowSettingsPopup(false)
 {
@@ -46,6 +48,7 @@ GameCore::GameCore(const HINSTANCE hInstance, const HWND hWnd, const UINT target
 GameCore::~GameCore()
 {
 	SceneManager::Destroy();
+	InteractionSystem::Destroy();
 	InputSystem::Destroy();
 	Renderer::Destroy();
 	FileDialog::Destroy();
@@ -107,11 +110,16 @@ int GameCore::Run()
 
 			prev = curr;
 
-			mpCurrentScene->Update(deltaTime);
-
 			if (!mbPlaying)
 			{
 				mpEditorCameraActor->Update(deltaTime);
+
+				InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+				interactionSystem.Update();
+			}
+			else
+			{
+				mpCurrentScene->Update(deltaTime);
 			}
 
 			InputSystem& inputSystem = InputSystem::GetInstance();
@@ -122,9 +130,7 @@ int GameCore::Run()
 
 			renderer.BeginFrame();
 			{
-				mpCurrentScene->Render();
-
-				renderer.Render();
+				renderer.RenderScene(mpCurrentScene->GetName());
 
 				if (!mbPlaying)
 				{
@@ -133,7 +139,12 @@ int GameCore::Run()
 					// Global editor UI
 					DrawEditorUI();
 
-					mpEditorCameraActor->DrawEditorUI();
+					// readonly editor camera UI
+					// ImGui::BeginDisabled();
+					{
+						mpEditorCameraActor->DrawEditorUI();
+					}
+					// ImGui::EndDisabled();
 
 					if (mpCurrentScene != nullptr)
 					{
@@ -173,6 +184,8 @@ void GameCore::DrawEditorUI()
 			ImGui::MenuItem(UTF8_TEXT("리소스 창"), nullptr, &mbShowResources);
 			ImGui::EndMenu();
 		}
+
+		ImGui::MenuItem(UTF8_TEXT("모드 변경(F5)"), nullptr, nullptr, false);
 
 		ImGui::EndMainMenuBar();
 	}
@@ -335,12 +348,14 @@ bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
 	}
 
 	InputSystem::Initialize();
+	InteractionSystem::Initialize();
 	SceneManager::Initialize();
 
 	Renderer& renderer = Renderer::GetInstance();
+	SceneManager& sceneManager = SceneManager::GetInstance();
 
 	spInstance = new GameCore(hInstance, hWnd, renderer.GetRefreshRate());
-	spInstance->mpCurrentScene = SceneManager::GetInstance().GetScene(0);
+	spInstance->mpCurrentScene = sceneManager.GetScene("Default");
 
 	std::unique_ptr<Actor> pEditorCameraActor = std::make_unique<Actor>(
 		spInstance->mpCurrentScene,
@@ -348,10 +363,14 @@ bool GameCore::TryInitialize(const HINSTANCE hInstance, const int nShowCmd)
 	);
 
 	ComponentFactory& componentFactory = ComponentFactory::GetInstance();
-	componentFactory.CreateComponentAlloc("CameraComponent", pEditorCameraActor.get());
-	componentFactory.CreateComponentAlloc("CameraControllerComponent", pEditorCameraActor.get());
 
+	Component* const pCameraComponent = componentFactory.CreateComponentAlloc("CameraComponent", pEditorCameraActor.get());
+	Component* const pCameraControllerComponent = componentFactory.CreateComponentAlloc("CameraControllerComponent", pEditorCameraActor.get());
+
+	spInstance->mpEditorCameraComponent = reinterpret_cast<CameraComponent*>(pCameraComponent);
 	spInstance->mpEditorCameraActor = std::move(pEditorCameraActor);
+
+	renderer.SetEditorCameraComponent(spInstance->mpEditorCameraComponent);
 
 	ShowWindow(hWnd, nShowCmd);
 	UpdateWindow(hWnd);
@@ -412,17 +431,20 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 				else
 				{
 					mpCurrentScene->ExitPlayMode();
+
+					Renderer& renderer = Renderer::GetInstance();
+
+					renderer.SetMainCameraComponent(mpEditorCameraComponent);
 				}
 				break;
 
 			default:
-				{
-					InputSystem& inputSystem = InputSystem::GetInstance();
-
-					inputSystem.OnKeyDown(static_cast<uint8_t>(wParam));
-				}
 				break;
 			}
+
+			InputSystem& inputSystem = InputSystem::GetInstance();
+
+			inputSystem.OnKeyDown(static_cast<uint8_t>(wParam));
 		}
 		break;
 
@@ -439,6 +461,13 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 			InputSystem& inputSystem = InputSystem::GetInstance();
 
 			inputSystem.OnKeyDown(VK_LBUTTON);
+
+			if (!mbPlaying)
+			{
+				InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+				interactionSystem.Pick(mpCurrentScene->GetName());
+			}
 		}
 		break;
 
@@ -447,6 +476,13 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 			InputSystem& inputSystem = InputSystem::GetInstance();
 
 			inputSystem.OnKeyUp(VK_LBUTTON);
+
+			if (!mbPlaying)
+			{
+				InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+				interactionSystem.ReleasePick();
+			}
 		}
 		break;
 
@@ -471,6 +507,13 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 			InputSystem& inputSystem = InputSystem::GetInstance();
 
 			inputSystem.OnKeyDown(VK_RBUTTON);
+
+			if (!mbPlaying)
+			{
+				InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+				interactionSystem.Pick(mpCurrentScene->GetName());
+			}
 		}
 		break;
 
@@ -479,6 +522,13 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 			InputSystem& inputSystem = InputSystem::GetInstance();
 
 			inputSystem.OnKeyUp(VK_RBUTTON);
+
+			if (!mbPlaying)
+			{
+				InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+				interactionSystem.ReleasePick();
+			}
 		}
 		break;
 

@@ -1,9 +1,9 @@
 #include "CameraComponent.h"
 
-#include "Core/MathHelper.h"
 #include "../Actor.h"
 #include "Renderer/Renderer.h"
 #include "UI/ImGuiHeaders.h"
+#include "../Scene.h"
 
 CameraComponent::CameraComponent(Actor* const pOwner, const char* const label, const uint32_t updateOrder)
 	: Component(pOwner, label, updateOrder)
@@ -20,6 +20,13 @@ void CameraComponent::Update(const float deltaTime)
 {
 	ASSERT(deltaTime > 0.f);
 
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.SetMainCameraComponent(this);
+}
+
+void CameraComponent::UpdateCameraInfomation()
+{
 	Actor& owner = GetOwner();
 
 	const Vector3 position = owner.GetPosition();
@@ -45,9 +52,77 @@ void CameraComponent::Update(const float deltaTime)
 		proj = XMMatrixPerspectiveFovLH(mFov, aspectRatio, mNearZ, mFarZ);
 	}
 
-	const Matrix viewProj = view * proj;
+	mViewProj = view * proj;
 
-	renderer.UpdateCBFrame(position, viewProj);
+	// https://copynull.tistory.com/265
+
+	// 가까운 평면
+	float x = mViewProj._14 + mViewProj._13;
+	float y = mViewProj._24 + mViewProj._23;
+	float z = mViewProj._34 + mViewProj._33;
+	float w = mViewProj._44 + mViewProj._43;
+
+	Plane nearPlane(x, y, z, w);
+	nearPlane.Normalize();
+
+	mFrustumPlanes[0] = nearPlane; // Near
+
+	// 먼 평면
+	x = mViewProj._14 - mViewProj._13;
+	y = mViewProj._24 - mViewProj._23;
+	z = mViewProj._34 - mViewProj._33;
+	w = mViewProj._44 - mViewProj._43;
+
+	Plane farPlane(x, y, z, w);
+	farPlane.Normalize();
+
+	mFrustumPlanes[1] = farPlane; // Far
+
+	// 왼쪽 평면
+	x = mViewProj._14 + mViewProj._11;
+	y = mViewProj._24 + mViewProj._21;
+	z = mViewProj._34 + mViewProj._31;
+	w = mViewProj._44 + mViewProj._41;
+
+	Plane leftPlane(x, y, z, w);
+	leftPlane.Normalize();
+
+	mFrustumPlanes[2] = leftPlane; // Left
+
+	// 오른쪽 평면
+	x = mViewProj._14 - mViewProj._11;
+	y = mViewProj._24 - mViewProj._21;
+	z = mViewProj._34 - mViewProj._31;
+	w = mViewProj._44 - mViewProj._41;
+
+	Plane rightPlane(x, y, z, w);
+	rightPlane.Normalize();
+
+	mFrustumPlanes[3] = rightPlane; // Right
+
+	// 윗 평면
+	x = mViewProj._14 - mViewProj._12;
+	y = mViewProj._24 - mViewProj._22;
+	z = mViewProj._34 - mViewProj._32;
+	w = mViewProj._44 - mViewProj._42;
+
+	Plane topPlane(x, y, z, w);
+	topPlane.Normalize();
+
+	mFrustumPlanes[4] = topPlane; // Top
+
+	// 아랫 평면
+	x = mViewProj._14 + mViewProj._12;
+	y = mViewProj._24 + mViewProj._22;
+	z = mViewProj._34 + mViewProj._32;
+	w = mViewProj._44 + mViewProj._42;
+
+	Plane bottomPlane(x, y, z, w);
+	bottomPlane.Normalize();
+
+	mFrustumPlanes[5] = bottomPlane; // Bottom
+
+	renderer.UpdateCBFrame(position, mViewProj);
 }
 
 void CameraComponent::DrawEditorUI()
@@ -106,4 +181,21 @@ void CameraComponent::CloneFrom(const Component& other)
 		mFarZ = otherCamera.mFarZ;
 		mFov = otherCamera.mFov;
 	}
+}
+
+bool CameraComponent::IsInViewFrustum(const BoundingSphere& sphereWorld) const
+{
+	// https://copynull.tistory.com/265
+
+	for (int i = 0; i < ARRAYSIZE(mFrustumPlanes); ++i)
+	{
+		const Plane& plane = mFrustumPlanes[i];
+
+		if (plane.DotCoordinate(sphereWorld.Center) < -sphereWorld.Radius)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

@@ -9,6 +9,7 @@
 
 class Scene;
 class Actor;
+class CameraComponent;
 
 class GameCore final : public IEditorUIDrawable
 {
@@ -55,6 +56,7 @@ private:
 	Scene* mpCurrentScene;
 
 	std::unique_ptr<Actor> mpEditorCameraActor;
+	CameraComponent* mpEditorCameraComponent;
 
 	bool mbShowResources; // whether resource window is visible
 	bool mbShowSettingsPopup; // whether settings popup is visible

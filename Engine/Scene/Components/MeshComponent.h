@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Component.h"
+#include "Core/MathHelper.h"
 
 class Mesh;
 class Material;
+class Renderer;
 
 class MeshComponent final : public Component
 {
@@ -13,11 +15,13 @@ public:
 
 	virtual void Update(const float deltaTime) override;
 
-	void RequestRender() const;
+	void SubmitRenderCommand() const;
 
 	virtual void DrawEditorUI() override;
 
 	virtual void CloneFrom(const Component& other) override;
+
+	BoundingSphere GetBoundingSphereWorld() const;
 
 private:
 	Mesh* mpMesh;

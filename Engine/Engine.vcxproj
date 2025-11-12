@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="Core\GameCore.cpp" />
     <ClCompile Include="Core\InputSystem.cpp" />
+    <ClCompile Include="Core\InteractionSystem.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
     <ClCompile Include="Resources\Material.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="Core\CommonDefs.h" />
     <ClInclude Include="Core\GameCore.h" />
     <ClInclude Include="Core\InputSystem.h" />
+    <ClInclude Include="Core\InteractionSystem.h" />
     <ClInclude Include="Core\MathHelper.h" />
     <ClInclude Include="Renderer\PipelineStateType.h" />
     <ClInclude Include="Renderer\Renderer.h" />

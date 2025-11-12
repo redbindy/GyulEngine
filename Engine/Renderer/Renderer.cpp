@@ -14,9 +14,13 @@
 
 #include "Core/CommonDefs.h"
 
+#include "Scene/Components/CameraComponent.h"
+#include "Scene/Components/MeshComponent.h"
+
 enum
 {
-	DEFAULT_COMMAND_QUEUE_SIZE = 256
+	DEFAULT_COMMAND_QUEUE_SIZE = 256,
+	DEFAULT_MESH_COMPONENT_LIST_SIZE = 32
 };
 
 // 구조체에 대해서 초기화 경고 끄기
@@ -42,7 +46,7 @@ Renderer::Renderer(
 	ID3D11Device* const pDevice,
 	ID3D11DeviceContext* const pDeviceContext,
 	IDXGISwapChain1* const pSwapChain,
-	UINT refreshRate
+	const UINT refreshRate
 )
 	: mpDevice(pDevice)
 	, mpDeviceContext(pDeviceContext)
@@ -328,8 +332,24 @@ void Renderer::EndFrame() const
 	mpSwapChain->Present(mbVSync, 0);
 }
 
-void Renderer::Render()
+void Renderer::RenderScene(const std::string& sceneName)
 {
+	mpMainCameraComponent->UpdateCameraInfomation();
+
+	// frustum culling
+	const std::vector<MeshComponent*>& meshComponentList = mSceneComponents[sceneName];
+
+	for (MeshComponent* const pMeshComponent : meshComponentList)
+	{
+		const BoundingSphere& boundingSphereWorld = pMeshComponent->GetBoundingSphereWorld();
+
+		if (mpMainCameraComponent->IsInViewFrustum(boundingSphereWorld))
+		{
+			pMeshComponent->SubmitRenderCommand();
+		}
+	}
+
+	// draw call
 	for (const RenderCommand& command : mRenderCommandQueue)
 	{
 		command.pMesh->Bind(*mpDeviceContext);
@@ -358,6 +378,7 @@ void Renderer::Render()
 	}
 	mRenderCommandQueue.clear();
 
+	// resolve multisample
 	if (mbMultiSampling)
 	{
 		ID3D11Resource* pMultiSampleBuffer = nullptr;
@@ -755,6 +776,50 @@ void Renderer::UpdateCBFrame(const Vector3& cameraPos, const Matrix& viewProj)
 	);
 }
 
+void Renderer::AddMeshComponentList(const std::string& sceneName)
+{
+	ASSERT(mSceneComponents.find(sceneName) == mSceneComponents.end());
+
+	std::vector<MeshComponent*> meshComponentList;
+	meshComponentList.reserve(DEFAULT_MESH_COMPONENT_LIST_SIZE);
+
+	mSceneComponents[sceneName] = std::move(meshComponentList);
+}
+
+void Renderer::RemoveMeshComponentList(const std::string& sceneName)
+{
+	ASSERT(mSceneComponents.find(sceneName) != mSceneComponents.end());
+
+	mSceneComponents.erase(sceneName);
+}
+
+void Renderer::AddMeshComponent(const std::string& sceneName, MeshComponent* const pMeshComponent)
+{
+	ASSERT(mSceneComponents.find(sceneName) != mSceneComponents.end());
+
+	mSceneComponents[sceneName].push_back(pMeshComponent);
+}
+
+void Renderer::RemoveMeshComponent(const std::string& sceneName, MeshComponent* const pMeshComponent)
+{
+	ASSERT(mSceneComponents.find(sceneName) != mSceneComponents.end());
+
+	std::vector<MeshComponent*>& meshComponentList = mSceneComponents[sceneName];
+
+#define VECTOR_ITER std::vector<MeshComponent*>::iterator
+
+	for (VECTOR_ITER iter = meshComponentList.begin(); iter != meshComponentList.end(); ++iter)
+	{
+		if (*iter == pMeshComponent)
+		{
+			meshComponentList.erase(iter);
+			break;
+		}
+	}
+
+#undef VECTOR_ITER
+}
+
 bool Renderer::TryInitialize(const HWND hWnd)
 {
 	ASSERT(hWnd != nullptr);
@@ -989,4 +1054,13 @@ void Renderer::DrawEditorUI()
 	ImGui::SliderFloat4(UTF8_TEXT("화면 초기화 색상"), mClearColor, 0.f, 1.f);
 
 	ImGui::PopID();
+}
+
+Vector3 Renderer::Unproject(const Vector3 v) const
+{
+	const Matrix& viewProj = mpMainCameraComponent->GetViewProjMatrix();
+
+	const Matrix invViewProj = viewProj.Invert();
+
+	return Vector3::Transform(v, invViewProj);
 }

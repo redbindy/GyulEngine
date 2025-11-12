@@ -6,7 +6,7 @@
 #include "UI/IEditorUIDrawable.h"
 
 class Actor;
-class MeshComponent;
+class CameraComponent;
 
 class Scene final : public IEditorUIDrawable
 {
@@ -20,10 +20,12 @@ public:
 	void EnterPlayMode();
 	void ExitPlayMode();
 
-	void AddMeshComponent(MeshComponent* const pMeshComponent);
-	void RemoveMeshComponent(MeshComponent* const pMeshComponent);
-
 	virtual void DrawEditorUI() override;
+
+	const std::string& GetName() const
+	{
+		return mSceneName;
+	}
 
 private:
 	std::string mSceneName;
@@ -31,11 +33,6 @@ private:
 	std::vector<Actor*> mpActorOriginals;
 	std::vector<Actor*> mpPlayActors;
 	std::vector<Actor*> mpPendingActors;
-
-	std::vector<MeshComponent*> mpMeshComponents;
-	std::vector<MeshComponent*> mpPendingMeshComponents;
-
-	bool mbPlaying;
 
 	int mNextActorId; // for generating unique actor names
 

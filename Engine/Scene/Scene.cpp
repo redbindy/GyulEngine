@@ -2,10 +2,11 @@
 
 #include "Actor.h"
 #include "Core/Assert.h"
-#include "Components/MeshComponent.h"
 #include "Components/ComponentFactory.h"
 #include "UI/ImGuiHeaders.h"
 #include "Core/CommonDefs.h"
+#include "Renderer/Renderer.h"
+#include "Core/InteractionSystem.h"
 
 enum
 {
@@ -17,14 +18,19 @@ Scene::Scene(const std::string& name)
 	, mpActorOriginals()
 	, mpPlayActors()
 	, mpPendingActors()
-	, mpMeshComponents()
-	, mbPlaying(false)
 	, mNextActorId(0)
 {
 	mpActorOriginals.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
 	mpPlayActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
 	mpPendingActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
-	mpMeshComponents.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
+
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.AddMeshComponentList(mSceneName);
+
+	InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+	interactionSystem.MakeSceneBuffer(mSceneName);
 
 	Actor* const pActor = new Actor(this, "DefaultActor");
 
@@ -45,35 +51,28 @@ Scene::~Scene()
 	{
 		delete pActor;
 	}
+
+	InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+	interactionSystem.RemoveSceneBuffer(mSceneName);
+
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.RemoveMeshComponentList(mSceneName);
 }
 
 void Scene::Update(const float deltaTime)
 {
 	ASSERT(deltaTime > 0.f);
 
-	if (mbPlaying)
+	for (Actor* const pActor : mpPlayActors)
 	{
-		for (Actor* const pActor : mpPlayActors)
-		{
-			pActor->Update(deltaTime);
-		}
-	}
-}
-
-void Scene::Render()
-{
-	for (MeshComponent* const pMeshComponent : mpMeshComponents)
-	{
-		pMeshComponent->RequestRender();
+		pActor->Update(deltaTime);
 	}
 }
 
 void Scene::EnterPlayMode()
 {
-	mbPlaying = true;
-
-	mpMeshComponents.swap(mpPendingMeshComponents);
-
 	for (Actor* const pActorOriginal : mpActorOriginals)
 	{
 		Actor* const pPlayActor = new Actor(this, pActorOriginal->GetLabel());
@@ -86,39 +85,11 @@ void Scene::EnterPlayMode()
 
 void Scene::ExitPlayMode()
 {
-	mbPlaying = false;
-
-	mpMeshComponents.swap(mpPendingMeshComponents);
-	mpPendingMeshComponents.clear();
-
 	for (Actor* const pPlayActor : mpPlayActors)
 	{
 		delete pPlayActor;
 	}
 	mpPlayActors.clear();
-}
-
-void Scene::AddMeshComponent(MeshComponent* const pMeshComponent)
-{
-	ASSERT(pMeshComponent != nullptr);
-
-	mpMeshComponents.push_back(pMeshComponent);
-}
-
-void Scene::RemoveMeshComponent(MeshComponent* const pMeshComponent)
-{
-	ASSERT(pMeshComponent != nullptr);
-
-#define VECTOR_ITER std::vector<MeshComponent*>::iterator
-
-	VECTOR_ITER iter = std::find(mpMeshComponents.begin(), mpMeshComponents.end(), pMeshComponent);
-
-	if (iter != mpMeshComponents.end())
-	{
-		mpMeshComponents.erase(iter);
-	}
-
-#undef VECTOR_ITER
 }
 
 void Scene::DrawEditorUI()
@@ -167,4 +138,3 @@ void Scene::DrawEditorUI()
 
 	ImGui::PopID();
 }
-

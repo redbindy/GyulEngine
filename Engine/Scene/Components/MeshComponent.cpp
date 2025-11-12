@@ -4,6 +4,7 @@
 #include "Resources/MaterialManager.h"
 
 #include "Renderer/Renderer.h"
+#include "Core/InteractionSystem.h"
 
 #include "../Actor.h"
 #include "../Scene.h"
@@ -18,16 +19,34 @@ MeshComponent::MeshComponent(Actor* const pOwner, const char* const label, const
 {
 	Scene& scene = pOwner->GetScene();
 
-	scene.AddMeshComponent(this);
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.AddMeshComponent(scene.GetName(), this);
+
+	InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+	interactionSystem.RegisterCollider(
+		scene.GetName(),
+		pOwner,
+		mpMesh->GetBoundingSphereLocal()
+	);
 }
 
 MeshComponent::~MeshComponent()
 {
 	Actor& owner = GetOwner();
-
 	Scene& scene = owner.GetScene();
 
-	scene.RemoveMeshComponent(this);
+	InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+	interactionSystem.UnregisterCollider(
+		scene.GetName(),
+		&owner
+	);
+
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.RemoveMeshComponent(scene.GetName(), this);
 }
 
 void MeshComponent::Update(const float deltaTime)
@@ -35,7 +54,7 @@ void MeshComponent::Update(const float deltaTime)
 	ASSERT(deltaTime > 0.f);
 }
 
-void MeshComponent::RequestRender() const
+void MeshComponent::SubmitRenderCommand() const
 {
 	ASSERT(mpMesh != nullptr);
 	ASSERT(mpMaterial != nullptr);
@@ -76,5 +95,19 @@ void MeshComponent::CloneFrom(const Component& other)
 		mpMesh = otherMeshComp.mpMesh;
 		mpMaterial = otherMeshComp.mpMaterial;
 	}
+}
+
+BoundingSphere MeshComponent::GetBoundingSphereWorld() const
+{
+	Actor& owner = GetOwner();
+
+	const Matrix worldMatrix = owner.GetTransform();
+
+	const BoundingSphere boundingSphereLocal = mpMesh->GetBoundingSphereLocal();
+
+	BoundingSphere boundingSphereWorld;
+	boundingSphereLocal.Transform(boundingSphereWorld, worldMatrix);
+
+	return boundingSphereWorld;
 }
 

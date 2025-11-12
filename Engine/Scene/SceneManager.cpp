@@ -83,6 +83,25 @@ void SceneManager::DrawEditorUI()
 	ImGui::PopID();
 }
 
+Scene* SceneManager::GetScene(const std::string& name) const
+{
+	Scene* pRet = nullptr;
+
+	for (Scene* const pScene : mpScenes)
+	{
+		if (pScene->GetName() == name)
+		{
+			pRet = pScene;
+
+			break;
+		}
+	}
+
+	ASSERT(pRet != nullptr);
+
+	return pRet;
+}
+
 void SceneManager::Initialize()
 {
 	ASSERT(spInstance == nullptr);

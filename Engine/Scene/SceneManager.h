@@ -16,12 +16,7 @@ public:
 
 	virtual void DrawEditorUI() override;
 
-	inline Scene* GetScene(const int index) const
-	{
-		ASSERT(index >= 0 && index < static_cast<int>(mpScenes.size()));
-
-		return mpScenes[index];
-	}
+	Scene* GetScene(const std::string& name) const;
 
 	// static
 	static void Initialize();

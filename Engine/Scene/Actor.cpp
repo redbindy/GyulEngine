@@ -151,7 +151,7 @@ void Actor::DrawEditorUI()
 	ImGui::PushID(mLabel);
 
 	// Actor as a tree node so its components can be collapsed/expanded
-	if (ImGui::TreeNode(mLabel))
+	if (ImGui::TreeNodeEx(mLabel, ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		ComponentFactory& componentFactory = ComponentFactory::GetInstance();
 		componentFactory.DrawAddComponentUI(this);

@@ -2,6 +2,8 @@
 
 #include "Component.h"
 
+#include "Core/MathHelper.h"
+
 class CameraComponent final : public Component
 {
 public:
@@ -10,9 +12,18 @@ public:
 
 	virtual void Update(const float deltaTime) override;
 
+	void UpdateCameraInfomation();
+
 	virtual void DrawEditorUI() override;
 
 	virtual void CloneFrom(const Component& other) override;
+
+	bool IsInViewFrustum(const BoundingSphere& sphereWorld) const;
+
+	const Matrix& GetViewProjMatrix() const
+	{
+		return mViewProj;
+	}
 
 private:
 
@@ -27,6 +38,9 @@ private:
 
 	// perspective
 	float mFov;
+
+	Matrix mViewProj;
+	Plane mFrustumPlanes[6];
 
 private:
 	CameraComponent(const CameraComponent& other) = delete;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
 #include <d3d11.h>
 #include <dxgi1_2.h>
@@ -12,6 +13,8 @@
 
 class Mesh;
 class Material;
+class CameraComponent;
+class MeshComponent;
 
 class Renderer final : public IEditorUIDrawable
 {
@@ -23,6 +26,9 @@ public:
 		CB_MATERIAL_SLOT = 2
 	};
 
+	// 구조체에 대해서 초기화 경고 끄기
+#pragma warning(push)
+#pragma warning(disable : 26495)
 	struct RenderCommand
 	{
 		Mesh* pMesh;
@@ -30,12 +36,13 @@ public:
 
 		Matrix worldMatrix;
 	};
+#pragma warning(pop)
 
 public:
 	void BeginFrame() const;
 	void EndFrame() const;
 
-	void Render();
+	void RenderScene(const std::string& sceneName);
 
 	void BeginUIFrame() const;
 	void EndUIFrame() const;
@@ -43,7 +50,15 @@ public:
 	void OnResize(const int width, const int height);
 	void UpdateCBFrame(const Vector3& cameraPos, const Matrix& viewProj);
 
+	void AddMeshComponentList(const std::string& sceneName);
+	void RemoveMeshComponentList(const std::string& sceneName);
+
+	void AddMeshComponent(const std::string& sceneName, MeshComponent* const pMeshComponent);
+	void RemoveMeshComponent(const std::string& sceneName, MeshComponent* const pMeshComponent);
+
 	virtual void DrawEditorUI() override;
+
+	Vector3 Unproject(const Vector3 v) const;
 
 	UINT GetRefreshRate() const
 	{
@@ -83,6 +98,17 @@ public:
 		return mViewport;
 	}
 
+	void SetEditorCameraComponent(CameraComponent* const pCameraComponent)
+	{
+		mpEditorCameraComponent = pCameraComponent;
+		mpMainCameraComponent = pCameraComponent;
+	}
+
+	void SetMainCameraComponent(CameraComponent* const pCameraComponent)
+	{
+		mpMainCameraComponent = pCameraComponent;
+	}
+
 	// static
 	static bool TryInitialize(const HWND hWnd);
 
@@ -118,6 +144,11 @@ private:
 
 	D3D11_VIEWPORT mViewport;
 
+	std::unordered_map<ERasterizerType, ID3D11RasterizerState*> mRasterizerStateMap;
+	std::unordered_map<ESamplerType, ID3D11SamplerState*> mSamplerStateMap;
+	std::unordered_map<EBlendStateType, ID3D11BlendState*> mBlendStateMap;
+	std::unordered_map<EDepthStencilType, ID3D11DepthStencilState*> mDepthStencilStateMap;
+
 	UINT mRefreshRate;
 
 	bool mbVSync;
@@ -127,20 +158,19 @@ private:
 
 	std::vector<RenderCommand> mRenderCommandQueue;
 
-	std::unordered_map<ERasterizerType, ID3D11RasterizerState*> mRasterizerStateMap;
-	std::unordered_map<ESamplerType, ID3D11SamplerState*> mSamplerStateMap;
-	std::unordered_map<EBlendStateType, ID3D11BlendState*> mBlendStateMap;
-	std::unordered_map<EDepthStencilType, ID3D11DepthStencilState*> mDepthStencilStateMap;
-
 	ID3D11Buffer* mpCBFrameGPU;
 	ID3D11Buffer* mpCBWorldMatrixGPU;
+
+	CameraComponent* mpEditorCameraComponent;
+	CameraComponent* mpMainCameraComponent;
+	std::unordered_map<std::string, std::vector<MeshComponent*>> mSceneComponents;
 
 private:
 	Renderer(
 		ID3D11Device* const pDevice,
 		ID3D11DeviceContext* const pDeviceContext,
 		IDXGISwapChain1* const pSwapChain,
-		UINT refreshRate
+		const UINT refreshRate
 	);
 	~Renderer();
 

@@ -42,6 +42,41 @@ public:
 
 	virtual void DrawEditorUI() override;
 
+	void SetTexturePath(const std::string& texturePath)
+	{
+		mTexturePath = texturePath;
+	}
+
+	void SetVertexShaderPath(const std::string& vertexShaderPath)
+	{
+		mVertexShaderPath = vertexShaderPath;
+	}
+
+	void SetPixelShaderPath(const std::string& pixelShaderPath)
+	{
+		mPixelShaderPath = pixelShaderPath;
+	}
+
+	void SetRasterizerType(const ERasterizerType rasterizerType)
+	{
+		mRasterizerType = rasterizerType;
+	}
+
+	void SetSamplerType(const ESamplerType samplerType)
+	{
+		mSamplerType = samplerType;
+	}
+
+	void SetBlendStateType(const EBlendStateType blendStateType)
+	{
+		mBlendStateType = blendStateType;
+	}
+
+	void SetDepthStencilType(const EDepthStencilType depthStencilType)
+	{
+		mDepthStencilType = depthStencilType;
+	}
+
 private:
 	CBMaterial mMaterialData;
 

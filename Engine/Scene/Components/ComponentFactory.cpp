@@ -49,9 +49,9 @@ void ComponentFactory::DrawAddComponentUI(Actor* const pActor)
 {
 	ASSERT(pActor != nullptr);
 
-	const char* const popupLabel = UTF8_TEXT("##ÄÄÆ÷³ÍÆ®");
+	const char* const label = UTF8_TEXT("##ÄÄÆ÷³ÍÆ®");
 
-	if (ImGui::BeginCombo(popupLabel, mComponentNames[mSelectedComponentIndex]))
+	if (ImGui::BeginCombo(label, mComponentNames[mSelectedComponentIndex]))
 	{
 		for (int i = 0; i < static_cast<int>(mComponentNames.size()); ++i)
 		{
