@@ -7,12 +7,24 @@
 
 #include "Core/Assert.h"
 #include "UI/IEditorUIDrawable.h"
+#include "Renderer/PipelineStateType.h"
 
 class Material;
 
 class MaterialManager final : public IEditorUIDrawable
 {
 public:
+	Material* CreateMaterial(
+		const std::string& path,
+		const std::string& texturePath,
+		const std::string& vertexShaderPath,
+		const std::string& pixelShaderPath,
+		const ERasterizerType rasterizerType,
+		const ESamplerType samplerType,
+		const EBlendStateType blendStateType,
+		const EDepthStencilType depthStencilType
+	);
+
 	Material* CreateMaterial(
 		const std::string& path,
 		const std::string& texturePath,

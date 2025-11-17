@@ -135,6 +135,15 @@
     <ClCompile Include="Core\InteractionSystem.cpp">
       <Filter>Main\.cpp</Filter>
     </ClCompile>
+    <ClCompile Include="Scene\Components\LightComponent.cpp">
+      <Filter>Main\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Resources\ModelManager.cpp">
+      <Filter>Main\.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="Resources\Model.cpp">
+      <Filter>Main\.cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ThirdParty\DirectXTK\Inc\DDS.h">
@@ -278,6 +287,18 @@
     <ClInclude Include="Core\InteractionSystem.h">
       <Filter>Main\.h</Filter>
     </ClInclude>
+    <ClInclude Include="Scene\Components\LightComponent.h">
+      <Filter>Main\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Light.h">
+      <Filter>Main\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\ModelManager.h">
+      <Filter>Main\.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources\Model.h">
+      <Filter>Main\.h</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl">
@@ -286,6 +307,7 @@
     <None Include="Shaders\Common.hlsli" />
     <None Include="Shaders\Basic.hlsli" />
     <None Include="Shaders\Sprite.hlsli" />
+    <None Include="Shaders\BlinnPhong.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\VSBasic.hlsl" />
@@ -296,5 +318,10 @@
       <Filter>Main\.h</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\PSFullScreen.hlsl" />
+    <FxCompile Include="Shaders\PSDebugSphere.hlsl" />
+    <FxCompile Include="Shaders\VSBlinnPhong.hlsl">
+      <Filter>Main\.h</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\PSBlinnPhong.hlsl" />
   </ItemGroup>
 </Project>

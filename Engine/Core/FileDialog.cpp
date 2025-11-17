@@ -52,6 +52,7 @@ bool FileDialog::TryInitialize(const HWND hWnd)
 
 	const COMDLG_FILTERSPEC filterSpecs[] =
 	{
+		{ TEXT("Model"), TEXT("*.fbx;*.obj;*.gltf;*.glb") },
 		{ TEXT("Image"), TEXT("*.jpg;*.jpeg;*.png;*.gif;*.bmp") },
 		{ TEXT("All"), TEXT("*.*") }
 	};

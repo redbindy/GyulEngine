@@ -53,14 +53,22 @@ void CameraComponent::UpdateCameraInfomation()
 	}
 
 	mViewProj = view * proj;
+	renderer.UpdateCBFrame(position, view * proj);
 
 	// https://copynull.tistory.com/265
+	const float r = mFarZ / (mFarZ - mNearZ);
+
+	Matrix tmpProj = proj;
+	tmpProj._33 = r;
+	tmpProj._43 = -r * mNearZ;
+
+	const Matrix mCullMatrix = view * tmpProj;
 
 	// 가까운 평면
-	float x = mViewProj._14 + mViewProj._13;
-	float y = mViewProj._24 + mViewProj._23;
-	float z = mViewProj._34 + mViewProj._33;
-	float w = mViewProj._44 + mViewProj._43;
+	float x = mCullMatrix._14 + mCullMatrix._13;
+	float y = mCullMatrix._24 + mCullMatrix._23;
+	float z = mCullMatrix._34 + mCullMatrix._33;
+	float w = mCullMatrix._44 + mCullMatrix._43;
 
 	Plane nearPlane(x, y, z, w);
 	nearPlane.Normalize();
@@ -68,10 +76,10 @@ void CameraComponent::UpdateCameraInfomation()
 	mFrustumPlanes[0] = nearPlane; // Near
 
 	// 먼 평면
-	x = mViewProj._14 - mViewProj._13;
-	y = mViewProj._24 - mViewProj._23;
-	z = mViewProj._34 - mViewProj._33;
-	w = mViewProj._44 - mViewProj._43;
+	x = mCullMatrix._14 - mCullMatrix._13;
+	y = mCullMatrix._24 - mCullMatrix._23;
+	z = mCullMatrix._34 - mCullMatrix._33;
+	w = mCullMatrix._44 - mCullMatrix._43;
 
 	Plane farPlane(x, y, z, w);
 	farPlane.Normalize();
@@ -79,10 +87,10 @@ void CameraComponent::UpdateCameraInfomation()
 	mFrustumPlanes[1] = farPlane; // Far
 
 	// 왼쪽 평면
-	x = mViewProj._14 + mViewProj._11;
-	y = mViewProj._24 + mViewProj._21;
-	z = mViewProj._34 + mViewProj._31;
-	w = mViewProj._44 + mViewProj._41;
+	x = mCullMatrix._14 + mCullMatrix._11;
+	y = mCullMatrix._24 + mCullMatrix._21;
+	z = mCullMatrix._34 + mCullMatrix._31;
+	w = mCullMatrix._44 + mCullMatrix._41;
 
 	Plane leftPlane(x, y, z, w);
 	leftPlane.Normalize();
@@ -90,10 +98,10 @@ void CameraComponent::UpdateCameraInfomation()
 	mFrustumPlanes[2] = leftPlane; // Left
 
 	// 오른쪽 평면
-	x = mViewProj._14 - mViewProj._11;
-	y = mViewProj._24 - mViewProj._21;
-	z = mViewProj._34 - mViewProj._31;
-	w = mViewProj._44 - mViewProj._41;
+	x = mCullMatrix._14 - mCullMatrix._11;
+	y = mCullMatrix._24 - mCullMatrix._21;
+	z = mCullMatrix._34 - mCullMatrix._31;
+	w = mCullMatrix._44 - mCullMatrix._41;
 
 	Plane rightPlane(x, y, z, w);
 	rightPlane.Normalize();
@@ -101,10 +109,10 @@ void CameraComponent::UpdateCameraInfomation()
 	mFrustumPlanes[3] = rightPlane; // Right
 
 	// 윗 평면
-	x = mViewProj._14 - mViewProj._12;
-	y = mViewProj._24 - mViewProj._22;
-	z = mViewProj._34 - mViewProj._32;
-	w = mViewProj._44 - mViewProj._42;
+	x = mCullMatrix._14 - mCullMatrix._12;
+	y = mCullMatrix._24 - mCullMatrix._22;
+	z = mCullMatrix._34 - mCullMatrix._32;
+	w = mCullMatrix._44 - mCullMatrix._42;
 
 	Plane topPlane(x, y, z, w);
 	topPlane.Normalize();
@@ -112,17 +120,15 @@ void CameraComponent::UpdateCameraInfomation()
 	mFrustumPlanes[4] = topPlane; // Top
 
 	// 아랫 평면
-	x = mViewProj._14 + mViewProj._12;
-	y = mViewProj._24 + mViewProj._22;
-	z = mViewProj._34 + mViewProj._32;
-	w = mViewProj._44 + mViewProj._42;
+	x = mCullMatrix._14 + mCullMatrix._12;
+	y = mCullMatrix._24 + mCullMatrix._22;
+	z = mCullMatrix._34 + mCullMatrix._32;
+	w = mCullMatrix._44 + mCullMatrix._42;
 
 	Plane bottomPlane(x, y, z, w);
 	bottomPlane.Normalize();
 
 	mFrustumPlanes[5] = bottomPlane; // Bottom
-
-	renderer.UpdateCBFrame(position, mViewProj);
 }
 
 void CameraComponent::DrawEditorUI()

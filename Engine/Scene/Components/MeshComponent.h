@@ -3,9 +3,7 @@
 #include "Component.h"
 #include "Core/MathHelper.h"
 
-class Mesh;
-class Material;
-class Renderer;
+class Model;
 
 class MeshComponent final : public Component
 {
@@ -24,8 +22,11 @@ public:
 	BoundingSphere GetBoundingSphereWorld() const;
 
 private:
-	Mesh* mpMesh;
-	Material* mpMaterial;
+	Model* mpModel;
+
+	bool mbModelSelecting;
+	bool mbVSSelecting;
+	bool mbPSSelecting;
 
 private:
 	MeshComponent(const MeshComponent& other) = delete;

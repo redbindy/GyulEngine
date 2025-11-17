@@ -107,12 +107,12 @@
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\DirectXTK\Inc;$(ProjectDir)ThirdParty\DirectXTK\Src;$(ProjectDir)ThirdParty\ImGui\Inc;$(ProjectDir)ThirdParty\ImGui\Inc\Backends;$(ProjectDir)ThirdParty\ImGui\Src;$(ProjectDir)ThirdParty\ImGui\Src\Backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)ThirdParty\DirectXTK\Inc;$(ProjectDir)ThirdParty\DirectXTK\Src;$(ProjectDir)ThirdParty\ImGui\Inc;$(ProjectDir)ThirdParty\ImGui\Inc\Backends;$(ProjectDir)ThirdParty\ImGui\Src;$(ProjectDir)ThirdParty\ImGui\Src\Backends;$(ProjectDir)ThirdParty\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;$(projectDir)ThirdParty\assimp\lib\Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -139,6 +139,8 @@
     <ClCompile Include="Resources\MaterialManager.cpp" />
     <ClCompile Include="Resources\Mesh.cpp" />
     <ClCompile Include="Resources\MeshManager.cpp" />
+    <ClCompile Include="Resources\Model.cpp" />
+    <ClCompile Include="Resources\ModelManager.cpp" />
     <ClCompile Include="Resources\ShaderManager.cpp" />
     <ClCompile Include="Resources\Texture.cpp" />
     <ClCompile Include="Resources\TextureManager.cpp" />
@@ -147,6 +149,7 @@
     <ClCompile Include="Scene\Components\CameraControllerComponent.cpp" />
     <ClCompile Include="Scene\Components\Component.cpp" />
     <ClCompile Include="Scene\Components\ComponentFactory.cpp" />
+    <ClCompile Include="Scene\Components\LightComponent.cpp" />
     <ClCompile Include="Scene\Components\MeshComponent.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Scene\SceneManager.cpp" />
@@ -169,6 +172,7 @@
     <ClInclude Include="Core\InputSystem.h" />
     <ClInclude Include="Core\InteractionSystem.h" />
     <ClInclude Include="Core\MathHelper.h" />
+    <ClInclude Include="Renderer\Light.h" />
     <ClInclude Include="Renderer\PipelineStateType.h" />
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Renderer\Vertex.h" />
@@ -176,6 +180,8 @@
     <ClInclude Include="Resources\MaterialManager.h" />
     <ClInclude Include="Resources\Mesh.h" />
     <ClInclude Include="Resources\MeshManager.h" />
+    <ClInclude Include="Resources\Model.h" />
+    <ClInclude Include="Resources\ModelManager.h" />
     <ClInclude Include="Resources\ShaderManager.h" />
     <ClInclude Include="Resources\Shape.h" />
     <ClInclude Include="Resources\Texture.h" />
@@ -185,9 +191,26 @@
     <ClInclude Include="Scene\Components\CameraControllerComponent.h" />
     <ClInclude Include="Scene\Components\Component.h" />
     <ClInclude Include="Scene\Components\ComponentFactory.h" />
+    <ClInclude Include="Scene\Components\LightComponent.h" />
     <ClInclude Include="Scene\Components\MeshComponent.h" />
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Scene\SceneManager.h" />
+    <FxCompile Include="Shaders\PSBlinnPhong.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Shaders\PSDebugSphere.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="Shaders\PSFullScreen.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -195,6 +218,11 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
     <FxCompile Include="Shaders\VSFullScreen.hlsl">
+      <FileType>Document</FileType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Shaders\VSBlinnPhong.hlsl">
       <FileType>Document</FileType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
@@ -225,6 +253,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Basic.hlsli" />
+    <None Include="Shaders\BlinnPhong.hlsli" />
     <None Include="Shaders\Common.hlsli" />
     <None Include="Shaders\Sprite.hlsli" />
     <None Include="ThirdParty\DirectXTK\Inc\SimpleMath.inl" />

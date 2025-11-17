@@ -15,7 +15,6 @@ public:
 	~Scene();
 
 	void Update(const float deltaTime);
-	void Render();
 
 	void EnterPlayMode();
 	void ExitPlayMode();

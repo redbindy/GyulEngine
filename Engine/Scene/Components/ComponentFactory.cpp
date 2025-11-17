@@ -3,6 +3,7 @@
 #include "MeshComponent.h"
 #include "CameraComponent.h"
 #include "CameraControllerComponent.h"
+#include "LightComponent.h"
 #include "UI/ImGuiHeaders.h"
 #include "Core/CommonDefs.h"
 
@@ -10,6 +11,7 @@
 	COMPONENT_ENTRY(MeshComponent) \
 	COMPONENT_ENTRY(CameraComponent) \
 	COMPONENT_ENTRY(CameraControllerComponent) \
+	COMPONENT_ENTRY(LightComponent) \
 
 ComponentFactory* ComponentFactory::spInstance = nullptr;
 

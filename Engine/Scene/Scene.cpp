@@ -1,5 +1,7 @@
 #include "Scene.h"
 
+// #include <random>
+
 #include "Actor.h"
 #include "Core/Assert.h"
 #include "Components/ComponentFactory.h"
@@ -10,7 +12,8 @@
 
 enum
 {
-	DEFAULT_ACTOR_BUFFER_SIZE = 32
+	DEFAULT_ACTOR_BUFFER_SIZE = 32,
+	RANDOM_ACTOR_COUNT = 1000
 };
 
 Scene::Scene(const std::string& name)
@@ -20,9 +23,9 @@ Scene::Scene(const std::string& name)
 	, mpPendingActors()
 	, mNextActorId(0)
 {
-	mpActorOriginals.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
-	mpPlayActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
-	mpPendingActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE);
+	mpActorOriginals.reserve(DEFAULT_ACTOR_BUFFER_SIZE + RANDOM_ACTOR_COUNT);
+	mpPlayActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE + RANDOM_ACTOR_COUNT);
+	mpPendingActors.reserve(DEFAULT_ACTOR_BUFFER_SIZE + RANDOM_ACTOR_COUNT);
 
 	Renderer& renderer = Renderer::GetInstance();
 
@@ -32,12 +35,33 @@ Scene::Scene(const std::string& name)
 
 	interactionSystem.MakeSceneBuffer(mSceneName);
 
+	ComponentFactory& componentFactory = ComponentFactory::GetInstance();
+
+	// 기본 액터 하나 생성
 	Actor* const pActor = new Actor(this, "DefaultActor");
 
-	ComponentFactory& componentFactory = ComponentFactory::GetInstance();
 	componentFactory.CreateComponentAlloc("MeshComponent", pActor);
-
 	mpActorOriginals.push_back(pActor);
+
+	// 성능 테스트용 무작위 액터 다량 생성
+	//std::mt19937 rng{ std::random_device{}() };
+	//std::uniform_real_distribution<float> distPos(-2000.f, 2000.f);
+
+	//for (int i = 0; i < RANDOM_ACTOR_COUNT; ++i)
+	//{
+	//	char nameBuf[MAX_LABEL_LENGTH];
+	//	sprintf(nameBuf, "Actor%d", mNextActorId++);
+
+	//	Actor* const pRandActor = new Actor(this, nameBuf);
+
+	//	// 무작위 위치 설정
+	//	pRandActor->SetPosition(Vector3(distPos(rng), distPos(rng), distPos(rng)));
+
+	//	// 메시 컴포넌트 부착
+	//	componentFactory.CreateComponentAlloc("MeshComponent", pRandActor);
+
+	//	mpActorOriginals.push_back(pRandActor);
+	//}
 }
 
 Scene::~Scene()

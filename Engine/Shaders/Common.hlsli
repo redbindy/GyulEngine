@@ -32,3 +32,20 @@ struct VSInput
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
 };
+
+#define MAX_LIGHTS 8
+
+struct Light
+{
+    float3 position;
+    float falloffStart;
+    float3 strength;
+    float falloffEnd;
+    float3 direction;
+    float spotPower;
+};
+
+cbuffer CBLight : register(b3)
+{
+    Light lights[MAX_LIGHTS];
+};

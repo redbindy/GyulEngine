@@ -14,6 +14,9 @@ class Texture;
 class Material final : public IEditorUIDrawable
 {
 public:
+	// 구조체에 대해서 초기화 경고 끄기
+#pragma warning(push)
+#pragma warning(disable : 26495)
 	struct CBMaterial
 	{
 		Vector3 ambientColor;
@@ -27,6 +30,7 @@ public:
 		uint8_t padding[16 - sizeof(bool)];
 	};
 	static_assert(sizeof(CBMaterial) % 16 == 0);
+#pragma warning(pop)
 
 public:
 	Material(
@@ -34,7 +38,11 @@ public:
 		const std::string& texturePath,
 		const std::string& vertexShaderPath,
 		const std::string& pixelShaderPath,
-		ComPtr<ID3D11Buffer>& pMaterialBufferGPU
+		ComPtr<ID3D11Buffer>& pMaterialBufferGPU,
+		const ERasterizerType rasterizerType,
+		const ESamplerType samplerType,
+		const EBlendStateType blendStateType,
+		const EDepthStencilType depthStencilType
 	);
 	~Material() = default;
 

@@ -17,6 +17,7 @@
 #include "Resources/ShaderManager.h"
 #include "Resources/TextureManager.h"
 #include "InteractionSystem.h"
+#include "Resources/ModelManager.h"
 
 enum
 {
@@ -248,6 +249,12 @@ void GameCore::DrawEditorUI()
 					ImGui::EndTabItem();
 				}
 
+				if (ImGui::BeginTabItem(UTF8_TEXT("¸ðµ¨")))
+				{
+					ModelManager::GetInstance().DrawEditorUI();
+					ImGui::EndTabItem();
+				}
+
 				ImGui::EndTabBar();
 			}
 		}
@@ -420,6 +427,14 @@ LRESULT GameCore::wndProc(const HWND hWnd, const UINT msg, const WPARAM wParam, 
 			{
 			case VK_ESCAPE:
 				mbShowSettingsPopup = !mbShowSettingsPopup;
+				break;
+
+			case VK_F4:
+				{
+					Renderer& renderer = Renderer::GetInstance();
+
+					renderer.SwitchWireframeMode();
+				}
 				break;
 
 			case VK_F5:

@@ -36,7 +36,6 @@ void InteractionSystem::Pick(const std::string& scene)
 	for (const InteractionCollider& collider : mCollidersMap[scene])
 	{
 		BoundingSphere boundingSphereWorld;
-
 		collider.boundingSphereLocal.Transform(
 			boundingSphereWorld,
 			collider.pActorOrNull->GetTransform()
@@ -79,6 +78,9 @@ void InteractionSystem::Pick(const std::string& scene)
 
 			mbPicked = true;
 		}
+
+		Renderer& renderer = Renderer::GetInstance();
+		renderer.OnDebugSphere();
 	}
 }
 
@@ -86,6 +88,10 @@ void InteractionSystem::ReleasePick()
 {
 	mPickedCollider = { nullptr, };
 	mbPicked = false;
+
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.OffDebugSphere();
 }
 
 void InteractionSystem::Update()
@@ -145,6 +151,10 @@ void InteractionSystem::Update()
 			mPrevVector = mCurrVector;
 		}
 	}
+
+	Renderer& renderer = Renderer::GetInstance();
+
+	renderer.UpdateDebugSphere(pickedActor.GetPosition(), boundingSphereWorld.Radius);
 }
 
 void InteractionSystem::MakeSceneBuffer(const std::string& sceneName)
@@ -165,12 +175,12 @@ void InteractionSystem::RemoveSceneBuffer(const std::string& sceneName)
 void InteractionSystem::RegisterCollider(
 	const std::string& scene,
 	Actor* const pActor,
-	const BoundingSphere& localSphere
+	const BoundingSphere& boundingSphereLocal
 )
 {
 	ASSERT(pActor != nullptr);
 
-	mCollidersMap[scene].push_back({ pActor, localSphere });
+	mCollidersMap[scene].push_back({ pActor, BoundingSphere(Vector3::Zero, boundingSphereLocal.Radius) });
 }
 
 void InteractionSystem::UnregisterCollider(const std::string& scene, Actor* const pActor)
@@ -192,6 +202,27 @@ void InteractionSystem::UnregisterCollider(const std::string& scene, Actor* cons
 	}
 
 #undef VECTOR_ITER
+}
+
+void InteractionSystem::UpdateColliderRadius(
+	const std::string& scene,
+	Actor* const pActor,
+	const BoundingSphere& boundingSphereLocal
+)
+{
+	ASSERT(pActor != nullptr);
+
+	std::vector<InteractionCollider>& v = mCollidersMap[scene];
+
+	for (InteractionCollider& collider : v)
+	{
+		if (collider.pActorOrNull == pActor)
+		{
+			collider.boundingSphereLocal = BoundingSphere(Vector3::Zero, boundingSphereLocal.Radius);
+
+			break;
+		}
+	}
 }
 
 void InteractionSystem::updateInteractionInfo()

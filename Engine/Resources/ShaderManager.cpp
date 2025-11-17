@@ -30,6 +30,7 @@ ShaderManager::ShaderManager(ID3D11Device& device)
 		{ SHADER_PATH("VSBasic.hlsl"), Vertex::EType::POS_NORMAL_UV },
 		{ SHADER_PATH("VSSprite.hlsl"), Vertex::EType::POS_NORMAL_UV },
 		{ SHADER_PATH("VSFullScreen.hlsl"), Vertex::EType::POS_NORMAL_UV },
+		{ SHADER_PATH("VSBlinnPhong.hlsl"), Vertex::EType::POS_NORMAL_UV },
 	};
 
 	for (const std::pair<const char*, Vertex::EType>& entry : vertexShaderEntries)
@@ -43,6 +44,8 @@ ShaderManager::ShaderManager(ID3D11Device& device)
 		SHADER_PATH("PSBasic.hlsl"),
 		SHADER_PATH("PSSprite.hlsl"),
 		SHADER_PATH("PSFullScreen.hlsl"),
+		SHADER_PATH("PSDebugSphere.hlsl"),
+		SHADER_PATH("PSBlinnPhong.hlsl"),
 	};
 
 	for (const char* const entry : pixelShaderEntries)
@@ -191,7 +194,7 @@ void ShaderManager::DrawEditorUI()
 {
 	ImGui::PushID("ShaderManager");
 
-	ImGui::Text(UTF8_TEXT("Á¤Á¡ ½¦ÀÌ´õ"));
+	ImGui::Text(UTF8_TEXT("Á¤Á¡ ¼ÎÀÌ´õ"));
 
 #define MAP_ITER std::unordered_map<std::string, ID3D11VertexShader*>::const_iterator
 
@@ -205,7 +208,7 @@ void ShaderManager::DrawEditorUI()
 
 	ImGui::Separator();
 
-	ImGui::Text(UTF8_TEXT("ÇÈ¼¿ ½¦ÀÌ´õ"));
+	ImGui::Text(UTF8_TEXT("ÇÈ¼¿ ¼ÎÀÌ´õ"));
 
 #define MAP_ITER std::unordered_map<std::string, ID3D11PixelShader*>::const_iterator
 
@@ -218,6 +221,52 @@ void ShaderManager::DrawEditorUI()
 #undef MAP_ITER
 
 	ImGui::PopID();
+}
+
+bool ShaderManager::DrawShaderSelectorPopupAndSelectShaders(std::string& outPath, const bool bPixel)
+{
+	ImGui::PushID("ShaderManager");
+
+	const char* const popupName = UTF8_TEXT("¼ÎÀÌ´õ ¸ñ·Ï");
+
+	ImGui::OpenPopup(popupName);
+
+	// selecet or cancel -> true
+	bool bRet = false;
+
+	if (ImGui::BeginPopupModal(popupName, nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		if (bPixel)
+		{
+			for (const std::pair<const std::string, ID3D11PixelShader*>& pair : mPixelShaderMap)
+			{
+				if (ImGui::Button(pair.first.c_str()))
+				{
+					outPath = pair.first;
+
+					bRet = true;
+				}
+			}
+		}
+		else
+		{
+			for (const std::pair<const std::string, ID3D11VertexShader*>& pair : mVertexShaderMap)
+			{
+				if (ImGui::Button(pair.first.c_str()))
+				{
+					outPath = pair.first;
+
+					bRet = true;
+				}
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+
+	ImGui::PopID();
+
+	return bRet || ImGui::IsKeyPressed(ImGuiKey_Escape);
 }
 
 void ShaderManager::Initialize(ID3D11Device& device)

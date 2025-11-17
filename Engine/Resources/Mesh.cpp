@@ -12,8 +12,7 @@ Mesh::Mesh(
 	const UINT vertexStride,
 	ComPtr<ID3D11Buffer>& indexBufferPtr,
 	const UINT indexCount,
-	const UINT indexStride,
-	const float radius
+	const UINT indexStride
 )
 	: mPath(path)
 	, mVertexType(eVertexType)
@@ -24,7 +23,6 @@ Mesh::Mesh(
 	, mIndexCount(indexCount)
 	, mIndexStride(indexStride)
 	, mPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST)
-	, mBoundingSphereLocal(Vector3(0.f, 0.f, 0.f), radius)
 {
 	ASSERT(vertexBufferPtr != nullptr);
 	ASSERT(indexBufferPtr != nullptr);
@@ -56,6 +54,8 @@ void Mesh::Bind(ID3D11DeviceContext& deviceContext) const
 
 void Mesh::DrawEditorUI()
 {
+	ImGui::PushID(mPath.c_str());
+
 	ImGui::SeparatorText(UTF8_TEXT("¸Þ½¬"));
 
 	ImGui::Text("Path: %s", mPath.c_str());
@@ -76,4 +76,6 @@ void Mesh::DrawEditorUI()
 	}
 
 	ImGui::Text("Topology: %s", topologyName);
+
+	ImGui::PopID();
 }

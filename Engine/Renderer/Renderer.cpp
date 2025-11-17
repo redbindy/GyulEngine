@@ -8,6 +8,7 @@
 #include "Resources/ShaderManager.h"
 #include "Resources/MeshManager.h"
 #include "Resources/MaterialManager.h"
+#include "Resources/ModelManager.h"
 
 #include "Resources/Mesh.h"
 #include "Resources/Material.h"
@@ -20,7 +21,7 @@
 enum
 {
 	DEFAULT_COMMAND_QUEUE_SIZE = 256,
-	DEFAULT_MESH_COMPONENT_LIST_SIZE = 32
+	DEFAULT_BUFFER_SIZE = 32
 };
 
 // 구조체에 대해서 초기화 경고 끄기
@@ -61,14 +62,24 @@ Renderer::Renderer(
 	, mViewport{ 0.f, }
 	, mRefreshRate(refreshRate)
 	, mbVSync(false)
-	, mClearColor{ 0.f, 0.f, 0.f, 1.f }
+	, mClearColor{ 1.f, 1.f, 1.f, 1.f }
 	, mRenderCommandQueue()
+	, mpCBFrameGPU(nullptr)
+	, mpCBWorldMatrixGPU(nullptr)
+	, mpEditorCameraComponent(nullptr)
+	, mpMainCameraComponent(nullptr)
+	, mSceneComponents()
+	, mDebugSphereRenderCommand{}
+	, mbOnDebugSphere(false)
+	, mLightPool{}
+	, mLightCount(0)
 {
 	ASSERT(pDevice != nullptr);
 	ASSERT(pDeviceContext != nullptr);
 	ASSERT(pSwapChain != nullptr);
 
 	mRenderCommandQueue.reserve(DEFAULT_COMMAND_QUEUE_SIZE);
+	mSceneComponents.reserve(DEFAULT_BUFFER_SIZE);
 
 	// -----------------------------
 	// Pipeline state objects create
@@ -233,6 +244,23 @@ Renderer::Renderer(
 
 	mpDeviceContext->VSSetConstantBuffers(0, ARRAY_SIZE, defaultBuffers);
 	mpDeviceContext->PSSetConstantBuffers(0, ARRAY_SIZE, defaultBuffers);
+
+	// debug sphere
+	{
+		MeshManager& meshManager = MeshManager::GetInstance();
+		MaterialManager& materialManager = MaterialManager::GetInstance();
+
+		mDebugSphereRenderCommand.pMesh = meshManager.GetMeshOrNull("Sphere");
+		mDebugSphereRenderCommand.pMaterial = materialManager.GetMaterialOrNull("DebugSphere");
+		mDebugSphereRenderCommand.worldMatrix = Matrix::Identity;
+	}
+
+	// light
+	{
+		mpCBLightGPU = createConstantBufferAlloc(mLightPool, sizeof(mLightPool));
+
+		mpDeviceContext->PSSetConstantBuffers(CB_LIGHT_SLOT, 1, &mpCBLightGPU);
+	}
 }
 
 Renderer::~Renderer()
@@ -241,6 +269,7 @@ Renderer::~Renderer()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
+	SafeRelease(mpCBLightGPU);
 	SafeRelease(mpCBWorldMatrixGPU);
 	SafeRelease(mpCBFrameGPU);
 
@@ -264,6 +293,7 @@ Renderer::~Renderer()
 		SafeRelease(pair.second);
 	}
 
+	ModelManager::Destroy();
 	MaterialManager::Destroy();
 	MeshManager::Destroy();
 	ShaderManager::Destroy();
@@ -309,7 +339,6 @@ ID3D11Buffer* Renderer::createConstantBufferAlloc(const void* const pData, const
 void Renderer::BeginFrame() const
 {
 	mpDeviceContext->RSSetViewports(1, &mViewport);
-	mpDeviceContext->ClearRenderTargetView(mpSDRRenderTargetViewGPU, mClearColor);
 
 	if (mbMultiSampling)
 	{
@@ -336,6 +365,18 @@ void Renderer::RenderScene(const std::string& sceneName)
 {
 	mpMainCameraComponent->UpdateCameraInfomation();
 
+	mpDeviceContext->UpdateSubresource(
+		mpCBLightGPU,
+		0,
+		nullptr,
+		mLightPool,
+		0,
+		0
+	);
+
+	memset(mLightPool, 0, sizeof(mLightPool));
+	mLightCount = 0;
+
 	// frustum culling
 	const std::vector<MeshComponent*>& meshComponentList = mSceneComponents[sceneName];
 
@@ -343,7 +384,7 @@ void Renderer::RenderScene(const std::string& sceneName)
 	{
 		const BoundingSphere& boundingSphereWorld = pMeshComponent->GetBoundingSphereWorld();
 
-		if (mpMainCameraComponent->IsInViewFrustum(boundingSphereWorld))
+		if (!mbViewFrustumCulling || mpMainCameraComponent->IsInViewFrustum(boundingSphereWorld))
 		{
 			pMeshComponent->SubmitRenderCommand();
 		}
@@ -370,6 +411,11 @@ void Renderer::RenderScene(const std::string& sceneName)
 			0
 		);
 
+		if (mbWireframeMode)
+		{
+			mpDeviceContext->RSSetState(mRasterizerStateMap[ERasterizerType::WIREFRAME]);
+		}
+
 		mpDeviceContext->DrawIndexed(
 			command.pMesh->GetIndexCount(),
 			0,
@@ -377,6 +423,33 @@ void Renderer::RenderScene(const std::string& sceneName)
 		);
 	}
 	mRenderCommandQueue.clear();
+
+	if (mbOnDebugSphere)
+	{
+		mDebugSphereRenderCommand.pMesh->Bind(*mpDeviceContext);
+		mDebugSphereRenderCommand.pMaterial->Bind(*mpDeviceContext);
+
+		const CBWorldMatrix cbWorldMat =
+		{
+			mDebugSphereRenderCommand.worldMatrix.Transpose(),
+			mDebugSphereRenderCommand.worldMatrix.Invert() // hlsl이 col-major라 전치 생략
+		};
+
+		mpDeviceContext->UpdateSubresource(
+			mpCBWorldMatrixGPU,
+			0,
+			nullptr,
+			&cbWorldMat,
+			0,
+			0
+		);
+
+		mpDeviceContext->DrawIndexed(
+			mDebugSphereRenderCommand.pMesh->GetIndexCount(),
+			0,
+			0
+		);
+	}
 
 	// resolve multisample
 	if (mbMultiSampling)
@@ -401,6 +474,8 @@ void Renderer::RenderScene(const std::string& sceneName)
 
 	// HDR to SDR
 	{
+		mpDeviceContext->OMSetRenderTargets(1, &mpSDRRenderTargetViewGPU, nullptr);
+
 		ShaderManager& shaderManager = ShaderManager::GetInstance();
 
 		ID3D11VertexShader* const pVSSprite = shaderManager.GetVertexShaderOrNull(SHADER_PATH("VSFullScreen.hlsl"));
@@ -408,14 +483,16 @@ void Renderer::RenderScene(const std::string& sceneName)
 
 		mpDeviceContext->VSSetShader(pVSSprite, nullptr, 0);
 
+		mpDeviceContext->RSSetState(mRasterizerStateMap[ERasterizerType::SOLID]);
+
 		ID3D11PixelShader* const pPSSprite = shaderManager.GetPixelShaderOrNull(SHADER_PATH("PSFullScreen.hlsl"));
 		ASSERT(pPSSprite != nullptr);
-
-		mpDeviceContext->OMSetRenderTargets(1, &mpSDRRenderTargetViewGPU, nullptr);
 
 		mpDeviceContext->PSSetShader(pPSSprite, nullptr, 0);
 		mpDeviceContext->PSSetSamplers(0, 1, &mSamplerStateMap[ESamplerType::LINEAR_WRAP]);
 		mpDeviceContext->PSSetShaderResources(0, 1, &mpHDRResourceViewGPU);
+
+		mpDeviceContext->OMSetDepthStencilState(mDepthStencilStateMap[EDepthStencilType::DEPTH_DISABLED], 0);
 
 		MeshManager& meshManager = MeshManager::GetInstance();
 		Mesh* const pSpriteMesh = meshManager.GetMeshOrNull("Square");
@@ -781,7 +858,7 @@ void Renderer::AddMeshComponentList(const std::string& sceneName)
 	ASSERT(mSceneComponents.find(sceneName) == mSceneComponents.end());
 
 	std::vector<MeshComponent*> meshComponentList;
-	meshComponentList.reserve(DEFAULT_MESH_COMPONENT_LIST_SIZE);
+	meshComponentList.reserve(DEFAULT_BUFFER_SIZE);
 
 	mSceneComponents[sceneName] = std::move(meshComponentList);
 }
@@ -998,6 +1075,7 @@ bool Renderer::TryInitialize(const HWND hWnd)
 	ShaderManager::Initialize(*pDevice);
 	MeshManager::Initialize(*pDevice);
 	MaterialManager::Initialize(*pDevice);
+	ModelManager::Initialize();
 
 	spInstance = new Renderer(
 		pDevice,
@@ -1044,13 +1122,14 @@ void Renderer::DrawEditorUI()
 {
 	ImGui::PushID("Renderer");
 
-	// VSync toggle
 	ImGui::Checkbox(UTF8_TEXT("수직동기화"), &mbVSync);
 
-	// Multisampling toggle
 	ImGui::Checkbox(UTF8_TEXT("멀티샘플링"), &mbMultiSampling);
 
-	// Clear color
+	ImGui::Checkbox(UTF8_TEXT("절두체 컬링"), &mbViewFrustumCulling);
+
+	ImGui::Checkbox(UTF8_TEXT("와이어프레임(F4)"), &mbWireframeMode);
+
 	ImGui::SliderFloat4(UTF8_TEXT("화면 초기화 색상"), mClearColor, 0.f, 1.f);
 
 	ImGui::PopID();

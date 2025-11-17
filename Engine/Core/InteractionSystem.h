@@ -27,12 +27,18 @@ public:
 	void RegisterCollider(
 		const std::string& scene,
 		Actor* const pActor,
-		const BoundingSphere& localSphere
+		const BoundingSphere& boundingSphereLocal
 	);
 
 	void UnregisterCollider(
 		const std::string& scene,
 		Actor* const pActor
+	);
+
+	void UpdateColliderRadius(
+		const std::string& scene,
+		Actor* const pActor,
+		const BoundingSphere& boundingSphereLocal
 	);
 
 	static void Initialize();

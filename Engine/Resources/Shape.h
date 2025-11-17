@@ -9,7 +9,7 @@ class Shape final
 public:
 	static inline void CreateTriangleDataAlloc(
 		std::vector<Vertex::PosNormalUV>& outVertices,
-		std::vector<int16_t>& outIndices
+		std::vector<uint16_t>& outIndices
 	)
 	{
 		outVertices = {
@@ -25,7 +25,7 @@ public:
 
 	static inline void CreateSquareDataAlloc(
 		std::vector<Vertex::PosNormalUV>& outVertices,
-		std::vector<int16_t>& outIndices
+		std::vector<uint16_t>& outIndices
 	)
 	{
 		outVertices = {
@@ -43,7 +43,7 @@ public:
 
 	static inline void CreateCubeDataAlloc(
 		std::vector<Vertex::PosNormalUV>& outVertices,
-		std::vector<int16_t>& outIndices
+		std::vector<uint16_t>& outIndices
 	)
 	{
 		outVertices = {
@@ -113,7 +113,7 @@ public:
 
 	static inline void CreateSphereDataAlloc(
 		std::vector<Vertex::PosNormalUV>& outVertices,
-		std::vector<int16_t>& outIndices
+		std::vector<uint16_t>& outIndices
 	)
 	{
 		constexpr float radius = 1.f;
@@ -123,7 +123,7 @@ public:
 		std::vector<Vertex::PosNormalUV> vertices;
 		vertices.reserve((stackCount + 1) * (sliceCount + 1));
 
-		std::vector<int16_t> indices;
+		std::vector<uint16_t> indices;
 		indices.reserve(vertices.capacity() * 6);
 
 		constexpr float DELTA_THETA = -XM_2PI / sliceCount;

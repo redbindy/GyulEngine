@@ -2,51 +2,9 @@
 
 게임 엔진 만들어보기
 
-## 구현 기능
+## 시연 영상
 
-- 기능 시연을 gif로 넣어놔서 각 항목별로 접었다 펼 수 있게 해놨습니다!
-
-<details>
-<summary>상호작용</summary>
-
-### 패널 조작
-
-![패널 조작](./gif/패널%20조작.gif)
-
-### 액터/컴포넌트 추가/삭제
-
-![액터/컴포넌트 추가/삭제](./gif/액터%20컴포넌트%20추가%20삭제.gif)
-
-### 변환 조작
-
-![변환 조작](./gif/변환%20조작.gif)
-
-### 카메라 조작
-
-![카메라 조작](./gif/카메라%20조작.gif)
-
-### 마우스 상호작용
-
-![마우스 상호작용](./gif/마우스%20상호작용.gif)
-
-</details>
-
-<details>
-<summary>렌더링</summary>
-
-### 방향광(Directional Light)
-
-![방향광](./gif/방향광.gif)
-
-### 조명(Point, Spot Light)
-
-![조명](./gif/조명.gif)
-
-### 멀티샘플링(Multi-sampling)
-
-![멀티샘플링](./gif/멀티샘플링.gif)
-
-</details>
+[![GyulEngine](https://img.youtube.com/vi/QGAM2CO9cjs/0.jpg)](https://youtu.be/QGAM2CO9cjs?si=JjC0BuULHmhRUTiK)
 
 ## Dependencies
 
@@ -54,3 +12,8 @@
 |----------|--------------|----------|
 | [DirectXTK](https://github.com/microsoft/DirectXTK) | DirectX Tool Kit for Windows | MIT |
 | [Dear ImGui](https://github.com/ocornut/imgui) | Immediate mode GUI library | MIT |
+| [Assimp](https://github.com/assimp/assimp) | Open Asset Import Library for importing various 3D model formats | BSD-3-Clause |
+
+### 모델 파일
+
+- [Blue Archive - Miyako](https://www.fab.com/listings/e9dfe6b0-71f7-4c31-80f8-28eb0755cd9b)

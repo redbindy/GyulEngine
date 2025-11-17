@@ -3,6 +3,7 @@
 #include <d3d11.h>
 
 #include "Core/MathHelper.h"
+#include "Core/Assert.h"
 
 #define VERTEX_LIST \
 	VERTEX_ENTRY(POS_UV, PosUV) \

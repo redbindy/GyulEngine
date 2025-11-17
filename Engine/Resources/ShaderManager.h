@@ -26,6 +26,8 @@ public:
 
 	virtual void DrawEditorUI() override;
 
+	bool DrawShaderSelectorPopupAndSelectShaders(std::string& outPath, const bool bPixel);
+
 	// static
 	static void Initialize(ID3D11Device& device);
 

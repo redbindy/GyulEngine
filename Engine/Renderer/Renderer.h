@@ -10,11 +10,14 @@
 #include "Core/MathHelper.h"
 #include "PipelineStateType.h"
 #include "UI/IEditorUIDrawable.h"
+#include "Light.h"
 
 class Mesh;
 class Material;
 class CameraComponent;
 class MeshComponent;
+class ModelComponent;
+struct Light;
 
 class Renderer final : public IEditorUIDrawable
 {
@@ -23,7 +26,8 @@ public:
 	{
 		CB_FRAME_SLOT = 0,
 		CB_WORLD_MATRIX_SLOT = 1,
-		CB_MATERIAL_SLOT = 2
+		CB_MATERIAL_SLOT = 2,
+		CB_LIGHT_SLOT = 3
 	};
 
 	// 구조체에 대해서 초기화 경고 끄기
@@ -93,33 +97,64 @@ public:
 		mRenderCommandQueue.push_back(command);
 	}
 
-	const D3D11_VIEWPORT& GetViewport() const
+	inline const D3D11_VIEWPORT& GetViewport() const
 	{
 		return mViewport;
 	}
 
-	void SetEditorCameraComponent(CameraComponent* const pCameraComponent)
+	inline void SetEditorCameraComponent(CameraComponent* const pCameraComponent)
 	{
 		mpEditorCameraComponent = pCameraComponent;
 		mpMainCameraComponent = pCameraComponent;
 	}
 
-	void SetMainCameraComponent(CameraComponent* const pCameraComponent)
+	inline void SetMainCameraComponent(CameraComponent* const pCameraComponent)
 	{
 		mpMainCameraComponent = pCameraComponent;
+	}
+
+	inline void OnDebugSphere()
+	{
+		mbOnDebugSphere = true;
+	}
+
+	inline void OffDebugSphere()
+	{
+		mbOnDebugSphere = false;
+	}
+
+	inline void UpdateDebugSphere(const Vector3 mCenter, const float radius)
+	{
+		const Matrix debugSphereTranslation = Matrix::CreateTranslation(mCenter);
+		const Matrix debugSphereScale = Matrix::CreateScale(radius);
+
+		mDebugSphereRenderCommand.worldMatrix = debugSphereScale * debugSphereTranslation;
+	}
+
+	inline void EnqueueLight(const Light& light)
+	{
+		if (mLightCount < MAX_LIGHTS)
+		{
+			mLightPool[mLightCount++] = light;
+		}
+	}
+
+	inline void SwitchWireframeMode()
+	{
+		mbWireframeMode = !mbWireframeMode;
 	}
 
 	// static
 	static bool TryInitialize(const HWND hWnd);
 
-	static Renderer& GetInstance()
+	inline static Renderer& GetInstance()
 	{
 		ASSERT(spInstance != nullptr);
 
 		return *spInstance;
 	}
 
-	static void Destroy()
+	inline static void Destroy()
 	{
 		delete spInstance;
 	}
@@ -153,6 +188,8 @@ private:
 
 	bool mbVSync;
 	bool mbMultiSampling;
+	bool mbViewFrustumCulling;
+	bool mbWireframeMode;
 
 	float mClearColor[4];
 
@@ -160,10 +197,17 @@ private:
 
 	ID3D11Buffer* mpCBFrameGPU;
 	ID3D11Buffer* mpCBWorldMatrixGPU;
+	ID3D11Buffer* mpCBLightGPU;
 
 	CameraComponent* mpEditorCameraComponent;
 	CameraComponent* mpMainCameraComponent;
 	std::unordered_map<std::string, std::vector<MeshComponent*>> mSceneComponents;
+
+	RenderCommand mDebugSphereRenderCommand;
+	bool mbOnDebugSphere;
+
+	Light mLightPool[MAX_LIGHTS];
+	int mLightCount;
 
 private:
 	Renderer(

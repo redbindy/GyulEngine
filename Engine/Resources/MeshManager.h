@@ -17,13 +17,13 @@ public:
 	Mesh* CreateMesh(
 		const std::string& path,
 		const std::vector<Vertex::PosNormalUV>& vertices,
-		const std::vector<int16_t>& indices
+		const std::vector<uint16_t>& indices
 	);
 
 	Mesh* CreateMesh(
 		const std::string& path,
 		const std::vector<Vertex::PosNormalUV>& vertices,
-		const std::vector<int32_t>& indices
+		const std::vector<uint32_t>& indices
 	);
 
 	Mesh* GetMeshOrNull(const std::string& path) const;
@@ -67,8 +67,8 @@ private:
 		const UINT vertexStride,
 		const void* pIndexData,
 		const UINT indexCount,
-		const UINT indexStride,
-		const float radius);
+		const UINT indexStride
+	);
 
 private:
 	MeshManager(const MeshManager& other) = delete;

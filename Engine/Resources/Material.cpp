@@ -13,7 +13,11 @@ Material::Material(
 	const std::string& texturePath,
 	const std::string& vertexShaderPath,
 	const std::string& pixelShaderPath,
-	ComPtr<ID3D11Buffer>& pMaterialBufferGPU
+	ComPtr<ID3D11Buffer>& pMaterialBufferGPU,
+	const ERasterizerType rasterizerType,
+	const ESamplerType samplerType,
+	const EBlendStateType blendStateType,
+	const EDepthStencilType depthStencilType
 )
 	: mMaterialData{}
 	, mPath(path)
@@ -21,12 +25,16 @@ Material::Material(
 	, mVertexShaderPath(vertexShaderPath)
 	, mPixelShaderPath(pixelShaderPath)
 	, mpMaterialBufferGPU(pMaterialBufferGPU)
-	, mRasterizerType(ERasterizerType::SOLID)
-	, mSamplerType(ESamplerType::LINEAR_WRAP)
-	, mBlendStateType(EBlendStateType::OPAQUE)
-	, mDepthStencilType(EDepthStencilType::DEPTH_ENABLED)
+	, mRasterizerType(rasterizerType)
+	, mSamplerType(samplerType)
+	, mBlendStateType(blendStateType)
+	, mDepthStencilType(depthStencilType)
 {
 	ASSERT(pMaterialBufferGPU != nullptr);
+
+	mMaterialData.bUseTexture = true;
+	mMaterialData.diffuseColor = Vector3(1.f, 1.f, 1.f);
+	mMaterialData.specularColor = Vector3(1.f, 1.f, 1.f);
 }
 
 void Material::Bind(ID3D11DeviceContext& deviceContext) const
@@ -34,9 +42,11 @@ void Material::Bind(ID3D11DeviceContext& deviceContext) const
 	TextureManager& textureManager = TextureManager::GetInstance();
 
 	Texture* const pTexture = textureManager.GetTextureOrNull(mTexturePath);
-	ASSERT(pTexture != nullptr);
 
-	pTexture->Bind(deviceContext);
+	if (pTexture != nullptr)
+	{
+		pTexture->Bind(deviceContext);
+	}
 
 	ShaderManager& shaderManager = ShaderManager::GetInstance();
 
@@ -80,6 +90,8 @@ void Material::Bind(ID3D11DeviceContext& deviceContext) const
 
 void Material::DrawEditorUI()
 {
+	ImGui::PushID(mPath.c_str());
+
 	ImGui::SeparatorText(UTF8_TEXT("머터리얼"));
 
 	ImGui::Checkbox(UTF8_TEXT("텍스처 사용"), &mMaterialData.bUseTexture);
@@ -99,4 +111,6 @@ void Material::DrawEditorUI()
 	ImGui::Text("Sampler: %s", GetSamplerTypeName(mSamplerType));
 	ImGui::Text("Blend State: %s", GetBlendTypeName(mBlendStateType));
 	ImGui::Text("Depth Stencil: %s", GetDepthStencilTypeName(mDepthStencilType));
+
+	ImGui::PopID();
 }

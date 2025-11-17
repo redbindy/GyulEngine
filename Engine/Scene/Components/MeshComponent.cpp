@@ -1,21 +1,22 @@
 #include "MeshComponent.h"
 
-#include "Resources/MeshManager.h"
-#include "Resources/MaterialManager.h"
-
 #include "Renderer/Renderer.h"
 #include "Core/InteractionSystem.h"
 
 #include "../Actor.h"
 #include "../Scene.h"
 #include "UI/ImGuiHeaders.h"
+#include "Resources/ModelManager.h"
 #include "Resources/Mesh.h"
 #include "Resources/Material.h"
+#include "Resources/ShaderManager.h"
 
 MeshComponent::MeshComponent(Actor* const pOwner, const char* const label, const uint32_t updateOrder)
 	: Component(pOwner, label, updateOrder)
-	, mpMesh(MeshManager::GetInstance().GetMeshOrNull("Cube"))
-	, mpMaterial(MaterialManager::GetInstance().GetMaterialOrNull("Default"))
+	, mpModel(ModelManager::GetInstance().GetModelOrNull("Cube"))
+	, mbModelSelecting(false)
+	, mbVSSelecting(false)
+	, mbPSSelecting(false)
 {
 	Scene& scene = pOwner->GetScene();
 
@@ -28,7 +29,7 @@ MeshComponent::MeshComponent(Actor* const pOwner, const char* const label, const
 	interactionSystem.RegisterCollider(
 		scene.GetName(),
 		pOwner,
-		mpMesh->GetBoundingSphereLocal()
+		mpModel->GetBoundingRadiusLocal()
 	);
 }
 
@@ -56,27 +57,110 @@ void MeshComponent::Update(const float deltaTime)
 
 void MeshComponent::SubmitRenderCommand() const
 {
-	ASSERT(mpMesh != nullptr);
-	ASSERT(mpMaterial != nullptr);
+	const ModelData& modelData = mpModel->GetModelData();
 
 	Actor& owner = GetOwner();
 
-	Renderer::RenderCommand renderCommand;
-	renderCommand.pMesh = mpMesh;
-	renderCommand.pMaterial = mpMaterial;
-	renderCommand.worldMatrix = owner.GetTransform();
+	const Matrix offset = Matrix::CreateTranslation(mpModel->GetBoundingRadiusLocal().Center * -1.0f);
+	const Matrix worldMatrix = offset * owner.GetTransform();
 
 	Renderer& renderer = Renderer::GetInstance();
 
-	renderer.EnqueueRenderCommand(renderCommand);
+	for (const std::pair<Mesh*, Material*>& pair : modelData)
+	{
+		Renderer::RenderCommand renderCommand;
+		renderCommand.pMesh = pair.first;
+		renderCommand.pMaterial = pair.second;
+		renderCommand.worldMatrix = worldMatrix;
+
+		renderer.EnqueueRenderCommand(renderCommand);
+	}
 }
 
 void MeshComponent::DrawEditorUI()
 {
 	if (ImGui::TreeNodeEx(GetLabel(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		mpMesh->DrawEditorUI();
-		mpMaterial->DrawEditorUI();
+		ImGui::Text("Model: %s", mpModel->GetPath().c_str());
+
+		if (ImGui::Button(UTF8_TEXT("¸ðµ¨ º¯°æ")))
+		{
+			mbModelSelecting = true;
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button(UTF8_TEXT("Á¤Á¡ ¼ÎÀÌ´õ º¯°æ")))
+		{
+			mbVSSelecting = true;
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button(UTF8_TEXT("ÇÈ¼¿ ¼ÎÀÌ´õ º¯°æ")))
+		{
+			mbPSSelecting = true;
+		}
+
+		if (mbModelSelecting)
+		{
+			Model* pOldModel = mpModel;
+
+			ModelManager& modelManager = ModelManager::GetInstance();
+
+			if (modelManager.DrawModelSelectorPopupAndSelectModel(mpModel))
+			{
+				mbModelSelecting = false;
+
+				// update collider
+				Actor& owner = GetOwner();
+				Scene& scene = owner.GetScene();
+
+				InteractionSystem& interactionSystem = InteractionSystem::GetInstance();
+
+				interactionSystem.UpdateColliderRadius(
+					scene.GetName(),
+					&owner,
+					mpModel->GetBoundingRadiusLocal()
+				);
+			}
+		}
+
+		if (mbVSSelecting || mbPSSelecting)
+		{
+			ShaderManager& shaderManager = ShaderManager::GetInstance();
+
+			std::string newPath = "";
+			if (shaderManager.DrawShaderSelectorPopupAndSelectShaders(/*out*/ newPath, mbPSSelecting))
+			{
+				if (!newPath.empty())
+				{
+					const ModelData& modelData = mpModel->GetModelData();
+					for (const std::pair<Mesh*, Material*>& pair : modelData)
+					{
+						if (mbPSSelecting)
+						{
+							pair.second->SetPixelShaderPath(newPath);
+						}
+						else
+						{
+							pair.second->SetVertexShaderPath(newPath);
+						}
+					}
+				}
+
+				mbPSSelecting = false;
+				mbVSSelecting = false;
+			}
+		}
+
+		const ModelData& modelData = mpModel->GetModelData();
+
+		for (const std::pair<Mesh*, Material*>& pair : modelData)
+		{
+			pair.first->DrawEditorUI();
+			pair.second->DrawEditorUI();
+		}
 
 		ImGui::TreePop();
 	}
@@ -92,8 +176,7 @@ void MeshComponent::CloneFrom(const Component& other)
 
 		const MeshComponent& otherMeshComp = static_cast<const MeshComponent&>(other);
 
-		mpMesh = otherMeshComp.mpMesh;
-		mpMaterial = otherMeshComp.mpMaterial;
+		mpModel = otherMeshComp.mpModel;
 	}
 }
 
@@ -103,7 +186,7 @@ BoundingSphere MeshComponent::GetBoundingSphereWorld() const
 
 	const Matrix worldMatrix = owner.GetTransform();
 
-	const BoundingSphere boundingSphereLocal = mpMesh->GetBoundingSphereLocal();
+	const BoundingSphere boundingSphereLocal = mpModel->GetBoundingRadiusLocal();
 
 	BoundingSphere boundingSphereWorld;
 	boundingSphereLocal.Transform(boundingSphereWorld, worldMatrix);

@@ -18,42 +18,6 @@ MeshManager::MeshManager(ID3D11Device& device)
 	, mMeshMap()
 {
 	mMeshMap.reserve(DEFAULT_BUFFER_SIZE);
-
-	{
-		std::vector<Vertex::PosNormalUV> vertices;
-		std::vector<int16_t> indices;
-
-		Shape::CreateTriangleDataAlloc(vertices, indices);
-
-		CreateMesh("Triangle", vertices, indices);
-	}
-
-	{
-		std::vector<Vertex::PosNormalUV> vertices;
-		std::vector<int16_t> indices;
-
-		Shape::CreateSquareDataAlloc(vertices, indices);
-
-		CreateMesh("Square", vertices, indices);
-	}
-
-	{
-		std::vector<Vertex::PosNormalUV> vertices;
-		std::vector<int16_t> indices;
-
-		Shape::CreateCubeDataAlloc(vertices, indices);
-
-		CreateMesh("Cube", vertices, indices);
-	}
-
-	{
-		std::vector<Vertex::PosNormalUV> vertices;
-		std::vector<int16_t> indices;
-
-		Shape::CreateSphereDataAlloc(vertices, indices);
-
-		CreateMesh("Sphere", vertices, indices);
-	}
 }
 
 MeshManager::~MeshManager()
@@ -67,11 +31,9 @@ MeshManager::~MeshManager()
 Mesh* MeshManager::CreateMesh(
 	const std::string& path,
 	const std::vector<Vertex::PosNormalUV>& vertices,
-	const std::vector<int16_t>& indices
+	const std::vector<uint16_t>& indices
 )
 {
-	const float radius = calculateBoundingSphereLocalRadius(vertices);
-
 	return createMeshAlloc(
 		path,
 		Vertex::EType::POS_NORMAL_UV,
@@ -80,18 +42,16 @@ Mesh* MeshManager::CreateMesh(
 		sizeof(Vertex::PosNormalUV),
 		indices.data(),
 		static_cast<UINT>(indices.size()),
-		sizeof(int16_t),
-		radius);
+		sizeof(uint16_t)
+	);
 }
 
 Mesh* MeshManager::CreateMesh(
 	const std::string& path,
 	const std::vector<Vertex::PosNormalUV>& vertices,
-	const std::vector<int32_t>& indices
+	const std::vector<uint32_t>& indices
 )
 {
-	const float radius = calculateBoundingSphereLocalRadius(vertices);
-
 	return createMeshAlloc(
 		path,
 		Vertex::EType::POS_NORMAL_UV,
@@ -100,8 +60,8 @@ Mesh* MeshManager::CreateMesh(
 		sizeof(Vertex::PosNormalUV),
 		indices.data(),
 		static_cast<UINT>(indices.size()),
-		sizeof(int32_t),
-		radius);
+		sizeof(uint32_t)
+	);
 }
 
 Mesh* MeshManager::GetMeshOrNull(const std::string& path) const
@@ -162,22 +122,6 @@ void MeshManager::Initialize(ID3D11Device& device)
 	spInstance = new MeshManager(device);
 }
 
-float MeshManager::calculateBoundingSphereLocalRadius(const std::vector<Vertex::PosNormalUV>& vertices)
-{
-	Vector3 minPos(D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX, D3D11_FLOAT32_MAX);
-	Vector3 maxPos = -minPos;
-
-	for (const Vertex::PosNormalUV& vertex : vertices)
-	{
-		minPos = Vector3::Min(minPos, vertex.pos);
-		maxPos = Vector3::Max(maxPos, vertex.pos);
-	}
-
-	const float radius = Vector3::Distance(minPos, maxPos) * 0.5f;
-
-	return radius;
-}
-
 Mesh* MeshManager::createMeshAlloc(
 	const std::string& path,
 	const Vertex::EType eVertexType,
@@ -186,8 +130,7 @@ Mesh* MeshManager::createMeshAlloc(
 	const UINT vertexStride,
 	const void* pIndexData,
 	const UINT indexCount,
-	const UINT indexStride,
-	const float radius
+	const UINT indexStride
 )
 {
 #define MAP_ITER std::unordered_map<std::string, Mesh*>::const_iterator
@@ -257,8 +200,7 @@ Mesh* MeshManager::createMeshAlloc(
 		vertexStride,
 		indexBufferPtr,
 		indexCount,
-		indexStride,
-		radius
+		indexStride
 	);
 
 	mMeshMap.insert(std::make_pair(path, pMesh));

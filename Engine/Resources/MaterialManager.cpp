@@ -24,6 +24,24 @@ MaterialManager::MaterialManager(ID3D11Device& device)
 		"./Shaders/VSBasic.hlsl",
 		"./Shaders/PSBasic.hlsl"
 	);
+
+	CreateMaterial(
+		"DebugSphere",
+		"",
+		"./Shaders/VSBasic.hlsl",
+		"./Shaders/PSDebugSphere.hlsl",
+		ERasterizerType::WIREFRAME,
+		ESamplerType::LINEAR_WRAP,
+		EBlendStateType::ALPHA_BLEND,
+		EDepthStencilType::DEPTH_ENABLED
+	);
+
+	CreateMaterial(
+		"BlinnPhong",
+		"./Assets/Default.dds",
+		"./Shaders/VSBlinnPhong.hlsl",
+		"./Shaders/PSBlinnPhong.hlsl"
+	);
 }
 
 MaterialManager::~MaterialManager()
@@ -38,7 +56,11 @@ Material* MaterialManager::CreateMaterial(
 	const std::string& path,
 	const std::string& texturePath,
 	const std::string& vertexShaderPath,
-	const std::string& pixelShaderPath
+	const std::string& pixelShaderPath,
+	const ERasterizerType rasterizerType,
+	const ESamplerType samplerType,
+	const EBlendStateType blendStateType,
+	const EDepthStencilType depthStencilType
 )
 {
 #define MAP_ITER std::unordered_map<std::string, Material*>::const_iterator
@@ -76,12 +98,37 @@ Material* MaterialManager::CreateMaterial(
 		texturePath,
 		vertexShaderPath,
 		pixelShaderPath,
-		materialBufferGPU
+		materialBufferGPU,
+		rasterizerType,
+		samplerType,
+		blendStateType,
+		depthStencilType
 	);
 
 	mMaterialMap.insert(std::make_pair(path, pMaterial));
 
 	return pMaterial;
+
+	return nullptr;
+}
+
+Material* MaterialManager::CreateMaterial(
+	const std::string& path,
+	const std::string& texturePath,
+	const std::string& vertexShaderPath,
+	const std::string& pixelShaderPath
+)
+{
+	return CreateMaterial(
+		path,
+		texturePath,
+		vertexShaderPath,
+		pixelShaderPath,
+		ERasterizerType::SOLID,
+		ESamplerType::LINEAR_WRAP,
+		EBlendStateType::OPAQUE,
+		EDepthStencilType::DEPTH_ENABLED
+	);
 }
 
 Material* MaterialManager::GetMaterialOrNull(const std::string& path) const
@@ -122,15 +169,10 @@ void MaterialManager::DrawEditorUI()
 
 	ImGui::Text(UTF8_TEXT("머티리얼 목록"));
 
-#define MAP_ITER std::unordered_map<std::string, Material*>::const_iterator
-
-	for (MAP_ITER iter = mMaterialMap.cbegin(); iter != mMaterialMap.cend(); ++iter)
+	for (const std::pair<const std::string, Material*>& pair : mMaterialMap)
 	{
-		const std::pair<const std::string, Material*>& pair = *iter;
 		ImGui::Text("%s", pair.first.c_str());
 	}
-
-#undef MAP_ITER
 
 	ImGui::PopID();
 }

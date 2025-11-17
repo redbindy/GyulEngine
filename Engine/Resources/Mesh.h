@@ -20,8 +20,7 @@ public:
 		const UINT vertexStride,
 		ComPtr<ID3D11Buffer>& indexBufferPtr,
 		const UINT indexCount,
-		const UINT indexStride,
-		const float radius
+		const UINT indexStride
 	);
 	~Mesh() = default;
 
@@ -39,11 +38,6 @@ public:
 		return mIndexCount;
 	}
 
-	inline const BoundingSphere& GetBoundingSphereLocal() const
-	{
-		return mBoundingSphereLocal;
-	}
-
 private:
 	std::string mPath;
 
@@ -58,8 +52,6 @@ private:
 	UINT mIndexStride;
 
 	D3D11_PRIMITIVE_TOPOLOGY mPrimitiveTopology;
-
-	BoundingSphere mBoundingSphereLocal;
 
 private:
 	Mesh(const Mesh& other) = delete;
