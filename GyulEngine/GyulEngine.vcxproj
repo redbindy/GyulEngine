@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -70,12 +70,16 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>DirectXTK\Inc;$(SolutionDir)ThirdParty</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -102,6 +106,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\DirectXTK\Inc</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,13 +131,86 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Components\AudioListenerComponent.h" />
+    <ClInclude Include="Components\AudioSourceComponent.h" />
+    <ClInclude Include="Components\RigidBodyComponent.h" />
+    <ClInclude Include="Core\App.h" />
+    <ClInclude Include="Core\Assert.h" />
+    <ClInclude Include="Resources\AudioClip.h" />
+    <ClInclude Include="Scene\CollisionManager.h" />
+    <ClInclude Include="Components\BoxCollider2DComponent.h" />
+    <ClInclude Include="Components\CircleCollider2DComponent.h" />
+    <ClInclude Include="Components\Collider2DComponent.h" />
+    <ClInclude Include="Core\Event.h" />
+    <ClInclude Include="Core\MathHelper.h" />
+    <ClInclude Include="Game\LoadResources.h" />
+    <ClInclude Include="Game\LoadScenes.h" />
+    <ClInclude Include="Game\TitleScene.h" />
+    <ClInclude Include="Renderer\Renderer.h" />
+    <ClInclude Include="Resources\EResourceType.h" />
+    <ClInclude Include="Resources\Resource.h" />
+    <ClInclude Include="Resources\ResourceManager.h" />
+    <ClInclude Include="Resources\SpriteAnimation.h" />
+    <ClInclude Include="Resources\Texture.h" />
+    <ClInclude Include="Components\CameraComponent.h" />
+    <ClInclude Include="Components\EColliderType.h" />
+    <ClInclude Include="Components\EComponentType.h" />
+    <ClInclude Include="Components\ScriptComponent.h" />
+    <ClInclude Include="Components\SpriteAnimationComponent.h" />
+    <ClInclude Include="Scene\ELayerType.h" />
+    <ClInclude Include="Core\Entity.h" />
+    <ClInclude Include="Scene\Floor.h" />
+    <ClInclude Include="Scene\Layer.h" />
+    <ClInclude Include="Game\PlayScene.h" />
+    <ClInclude Include="Components\Component.h" />
+    <ClInclude Include="Scene\Actor.h" />
+    <ClInclude Include="Core\Input.h" />
+    <ClInclude Include="Core\Time.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GyulEngine.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Components\SpriteComponent.h" />
+    <ClInclude Include="Components\TransformComponent.h" />
+    <ClInclude Include="Scene\Object.h" />
+    <ClInclude Include="Scene\Scene.h" />
+    <ClInclude Include="Scene\SceneManager.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UI\EUIType.h" />
+    <ClInclude Include="UI\UIBase.h" />
+    <ClInclude Include="UI\UIManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Components\AudioListenerComponent.cpp" />
+    <ClCompile Include="Components\AudioSourceComponent.cpp" />
+    <ClCompile Include="Components\RigidBodyComponent.cpp" />
+    <ClCompile Include="Core\App.cpp" />
+    <ClCompile Include="Game\TitleScene.cpp" />
+    <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Resources\AudioClip.cpp" />
+    <ClCompile Include="Resources\Resource.cpp" />
+    <ClCompile Include="Resources\ResourceManager.cpp" />
+    <ClCompile Include="Resources\SpriteAnimation.cpp" />
+    <ClCompile Include="Resources\Texture.cpp" />
+    <ClCompile Include="Scene\CollisionManager.cpp" />
+    <ClCompile Include="Components\BoxCollider2DComponent.cpp" />
+    <ClCompile Include="Components\CameraComponent.cpp" />
+    <ClCompile Include="Components\CircleCollider2DComponent.cpp" />
+    <ClCompile Include="Components\Collider2DComponent.cpp" />
+    <ClCompile Include="Components\ScriptComponent.cpp" />
+    <ClCompile Include="Components\SpriteAnimationComponent.cpp" />
+    <ClCompile Include="Scene\Floor.cpp" />
+    <ClCompile Include="Scene\Layer.cpp" />
+    <ClCompile Include="Game\PlayScene.cpp" />
+    <ClCompile Include="Scene\Actor.cpp" />
+    <ClCompile Include="Core\Input.cpp" />
+    <ClCompile Include="Core\Time.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Components\Component.cpp" />
+    <ClCompile Include="Components\SpriteComponent.cpp" />
+    <ClCompile Include="Components\TransformComponent.cpp" />
+    <ClCompile Include="Scene\Scene.cpp" />
+    <ClCompile Include="Scene\SceneManager.cpp" />
+    <ClCompile Include="UI\UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GyulEngine.rc" />
@@ -137,6 +218,14 @@
   <ItemGroup>
     <Image Include="GyulEngine.ico" />
     <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ThirdParty\DirectXTK\DirectXTK_Desktop_2022.vcxproj">
+      <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,6 +2,12 @@
 
 게임 엔진 만들어보기
 
+## Dependencies
+
+| Library | Description | License |
+|----------|--------------|----------|
+| [DirectXTK](https://github.com/microsoft/DirectXTK) | DirectX Tool Kit for Windows | MIT |
+
 ## 참고 자료
 
 - [홍랩 그래픽스 새싹코스](https://www.honglab.ai/collections/graphics)
